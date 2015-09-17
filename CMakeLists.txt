@@ -11,5 +11,5 @@ else()
   add_subdirectory(validation)
 endif()
 
-add_subdirectory(lib)
+add_subdirectory(unclelib)
 add_subdirectory(utils)
