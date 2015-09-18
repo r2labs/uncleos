@@ -7,9 +7,8 @@
 #include "inc/hw_nvic.h"
 #include "inc/hw_types.h"
 
-#include "libstd/nexus.h"
-#include "libut/utlist.h"
-#include "libsystick/systick.h"
+#include "utlist.h"
+#include "systick.h"
 #include "schedule.h"
 
 /*! A block of memory for each thread's local stack. */
