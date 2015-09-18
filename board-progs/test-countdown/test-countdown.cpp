@@ -31,18 +31,31 @@ timer countdown_timer;
 timer blink_timer;
 blinker blink;
 uart uart0;
+uint32_t timer_data;
 
 #define UART0_RX_BUFFER_SIZE 8
 static semaphore UART0_RX_SEM;
 static buffer<char, UART0_RX_BUFFER_SIZE> UART0_RX_BUFFER;
 
 void timer_updater() {
-    uint32_t timer_data;
+    uint32_t clockspeed = SysCtlClockGet();
 
     while(1) {
         /* todo: populate these uint32_t's with sensor data */
-        timer_data = TimerValueGet(TIMER2_BASE, TIMER_A);
-        uart0.printf("timer: %u\n", timer_data);
+        timer_data = TimerValueGet(TIMER2_BASE, TIMER_A)/clockspeed;
+        os_surrender_context();
+    }
+}
+
+void timer_outputter() {
+
+    uint32_t timer_old_data;
+
+    while(1) {
+        if (timer_old_data != timer_data) {
+            timer_old_data = timer_data;
+            uart0.printf("timer: %u\n", timer_data);
+        }
         os_surrender_context();
     }
 }
@@ -65,6 +78,7 @@ int main(void) {
 
     os_threading_init();
     schedule(timer_updater, 200);
+    schedule(timer_outputter, 200);
     os_launch();
 }
 
