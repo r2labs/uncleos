@@ -133,7 +133,7 @@ typedef struct tcb_t {
     semaphore_t* sem;
 
     /*! sleep timer of the thread */
-    /* int32_t sleep_timer;
+    /* int32_t sleep_timer; */
 
     /*! priority of the thread */
     /* int8_t priority; */

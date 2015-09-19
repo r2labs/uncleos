@@ -72,16 +72,16 @@ void motor::set(percent_t speed) {
 
     current_speed = speed;
 
-    uint16_t adjusted_duty;
-    switch(adjusted_direction()) {
-    case FORWARD:
-        adjusted_duty = speed;
-        break;
-    case BACKWARD:
-        adjusted_duty = pwm_max_period - speed;
-        break;
-    default: while(1) {}
-    }
+    /* uint16_t adjusted_duty; */
+    /* switch(adjusted_direction()) { */
+    /* case FORWARD: */
+    /*     adjusted_duty = speed; */
+    /*     break; */
+    /* case BACKWARD: */
+    /*     adjusted_duty = pwm_max_period - speed; */
+    /*     break; */
+    /* default: while(1) {} */
+    /* } */
 
     if (enabled == true) {
         PWMPulseWidthSet(pwm_base, pwm_out, speed);

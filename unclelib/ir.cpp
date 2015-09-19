@@ -26,7 +26,7 @@ void ir::sample() {
 
 int32_t ir::average() {
 
-    int32_t i, value;
+    uint32_t i, value;
     value = 0;
     for (i=0; i<buf.len; ++i) {
         value += buf.buf[i];

@@ -44,7 +44,8 @@ void schedule_init();
 
 void schedule(task_t, frequency_t);
 
-sched_task_pool* schedule_hash_find_int(sched_task_pool* queues, frequency_t target_frequency);
+sched_task_pool* schedule_hash_find_int(volatile sched_task_pool* queues, 
+                                        frequency_t target_frequency);
 
 void schedule_hash_add_int(sched_task_pool* queues, sched_task_pool* add);
 

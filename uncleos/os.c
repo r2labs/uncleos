@@ -30,6 +30,11 @@ bool OS_FIRST_RUN = true;
 bool OS_THREADING_INITIALIZED;
 uint8_t OS_NUM_THREADS;
 
+/* Forward declarations */
+bool IntMasterEnable(void);
+void SysTickDisable(void);
+void IntPendSet(uint32_t ui32Interrupt);
+
 void os_threading_init() {
 
     uint32_t i;
@@ -235,7 +240,7 @@ void _os_reset_thread_stack(tcb_t* tcb, task_t task) {
     asm volatile ("POP {R9, R10, R11, R12}");
 }
 
-always inline
+always inline static
 void scheduler_reschedule(void) {
     executing = EDF_QUEUE;
     pool = SCHEDULER_QUEUES;
@@ -388,8 +393,8 @@ void schedule(task_t task, frequency_t frequency_in_cycles) {
 
     /* deadline_t seriousness = DL_SOFT; */
 
-    sched_task *ready_task = NULL;
-    sched_task_pool *ready_queue = NULL;
+    volatile sched_task *ready_task = NULL;
+    volatile sched_task_pool *ready_queue = NULL;
 
     /* Grab a new task from the unused task pile */
     ready_task = SCHEDULER_UNUSED_TASKS;
@@ -423,8 +428,8 @@ void schedule(task_t task, frequency_t frequency_in_cycles) {
         ready_queue->deadline = frequency_in_cycles;
         if (!SCHEDULER_QUEUES) {
             SCHEDULER_QUEUES = ready_queue;
-            SCHEDULER_QUEUES->next = SCHEDULER_QUEUES;
-            SCHEDULER_QUEUES->prev = SCHEDULER_QUEUES;
+            SCHEDULER_QUEUES->next = (sched_task_pool*)SCHEDULER_QUEUES;
+            SCHEDULER_QUEUES->prev = (sched_task_pool*)SCHEDULER_QUEUES;
         } else {
             CDL_PREPEND(SCHEDULER_QUEUES, ready_queue);
         }
@@ -446,16 +451,17 @@ void schedule_init() {
     }
 }
 
-sched_task_pool* schedule_hash_find_int(sched_task_pool* queues, frequency_t target_frequency) {
+sched_task_pool* schedule_hash_find_int(volatile sched_task_pool* queues, 
+                                        frequency_t target_frequency) {
 
-    sched_task_pool* start = queues;
-    sched_task_pool* inspect = queues;
+    volatile sched_task_pool* start = queues;
+    volatile sched_task_pool* inspect = queues;
 
     if (!inspect) { return NULL; }
 
     do {
         if(inspect->deadline == target_frequency) {
-            return inspect;
+            return (sched_task_pool*)inspect;
         }
         inspect = inspect->next;
     } while (inspect != start);
@@ -467,8 +473,8 @@ sched_task_pool* schedule_hash_find_int(sched_task_pool* queues, frequency_t tar
  *  this function */
 void edf_init() {
 
-    sched_task_pool *start = SCHEDULER_QUEUES;
-    sched_task_pool *next = start->next;
+    volatile sched_task_pool *start = SCHEDULER_QUEUES;
+    volatile sched_task_pool *next = start->next;
 
     /* avoid the NULL EDF_QUEUE to allow optimized form of `edf_insert' */
     DL_EDF_INSERT(EDF_QUEUE, start->queue);
@@ -483,7 +489,7 @@ void edf_init() {
 
 void edf_insert(sched_task* task) {
 
-    sched_task *elt = EDF_QUEUE;
+    volatile sched_task *elt = EDF_QUEUE;
 
     while(elt && task->absolute_deadline > elt->absolute_deadline) {
         elt = elt->pri_next;
@@ -525,7 +531,7 @@ tcb_t* edf_pop() {
 }
 
 sched_task* edf_get_edf_queue() {
-    return EDF_QUEUE;
+    return (sched_task*)EDF_QUEUE;
 }
 
 /*! \pre disable interrupts before we get here */
