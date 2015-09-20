@@ -80,7 +80,3 @@ public:
 /*! End doxygen group
  * @}
  */
-
-/* Local Variables: */
-/* firestarter: (compile "make -k -j32 -C ~/workspace/ee445m-labs/build/") */
-/* End: */
