@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+# Written by Eric Crosson
+# 2015-09-21
+
+##
+# Generate a look-up table for hitec servo motors used in the AL5D Lynxmotion
+# robotic arm.
+
+require 'yaml'
+
+class Integer
+  # Return self in miliseconds, i.e. * 10^-6.
+  def ms
+    return self * (10 ** -6)
+  end
+end
+
+class Float
+  # Return the number of decimals in self.
+  def decimals
+    a = self
+    num = 0
+    while(a != a.to_i)
+      num += 1
+      a *= 10
+    end
+    num
+  end
+end
+
+class Rational
+  # Return the number of decimals in self.
+  def decimals
+    a = self
+    num = 0
+    while(a != a.to_i)
+      num += 1
+      a *= 10
+    end
+    num
+  end
+end
+
+# Generate a lookup table from beginning to end of +range+, inclusive.
+# +Equation+ is used to translate index to lut value, along every +step+.
+# +output_significant_digits+ controls the number of significant digits captured
+# in the output values of the lut.
+def generate_lut(range, equation, step,
+                 output_significant_digits = 1.ms.decimals)
+  index_significant_digits = step.decimals
+
+  lut = {}
+  range.step(step) do |n|
+    n = n.round(index_significant_digits)
+    lut[n] = equation.call(n).round(output_significant_digits)
+  end
+  lut
+end
+
+# These arguments to generate_lut are descriptive of the motors on the
+# Lynxmotion AL5D robotic arm.
+if $PROGRAM_NAME == __FILE__
+  servo_range = (0..180)
+  equation = lambda { |n| 600.ms + (n * 10.ms) }
+  step = 0.1
+  yaml_file = ARGV.first || './lut.out'
+  lut = generate_lut(servo_range, equation, step)
+  File.open(yaml_file, 'w') { |f| f.write lut.to_yaml }
+end
