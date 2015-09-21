@@ -10,3 +10,4 @@ set(CMAKE_EXE_LINKER_FLAGS "-T ../map.ld --entry Reset_Handler -nostdlib")
 configure_file(map.ld map.ld COPYONLY)
 
 add_subdirectory(test-countdown)
+add_subdirectory(test-pwm)
