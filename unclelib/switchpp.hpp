@@ -11,6 +11,10 @@
 
 #include "driverlib/gpio.h"
 
+#define BUTTON_LEFT          GPIO_PIN_4
+#define BUTTON_RIGHT         GPIO_PIN_0
+#define BUTTONS_BOTH         (BUTTON_LEFT | BUTTON_RIGHT)
+
 typedef uint32_t memory_address_t;
 
 class lswitch : public interruptable {

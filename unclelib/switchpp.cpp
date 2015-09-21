@@ -9,6 +9,7 @@
 
 #include "inc/hw_types.h"
 #include "inc/hw_gpio.h"
+#include "inc/hw_memmap.h"
 
 #define NULL 0x00
 
@@ -83,6 +84,7 @@ uint32_t lswitch::end_debounce() {
 uint32_t lswitch::ack() {
 
     GPIOIntClear(base, pin);
+    return 0;
 }
 
 uint32_t lswitch::sample() {
