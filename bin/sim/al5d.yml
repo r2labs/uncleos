@@ -1,8 +1,8 @@
 ---
 gripper:
-  min: 1
+  min: 1000
   max: 2500
-  rest: 1
+  rest: 1000
 wrist:
   min: 600
   max: 2500
