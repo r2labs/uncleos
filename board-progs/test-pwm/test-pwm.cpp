@@ -148,13 +148,13 @@ int main(void) {
     servo1 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1);
     servo1.set(duty_cycle*servo::pwm_max_period/200);
     servo1.start();
-    servo2 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_2);
+    servo2 = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2);
     servo2.set(duty_cycle*servo::pwm_max_period/200);
     servo2.start();
-    servo3 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_3);
+    servo3 = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3);
     servo3.set(duty_cycle*servo::pwm_max_period/200);
     servo3.start();
-    servo4 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_4);
+    servo4 = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4);
     servo4.set(duty_cycle*servo::pwm_max_period/200);
     servo4.start();
 
