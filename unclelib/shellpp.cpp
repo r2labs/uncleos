@@ -112,9 +112,7 @@ void shell::init_ps1() {
 
 void* shell::memset(void* b, int c, int len) {
 
-    int i;
     unsigned char *p = (unsigned char *) b;
-    i = 0;
     while(len > 0) {
         *p = c;
         ++p;
@@ -129,7 +127,7 @@ uint32_t shell::strlen(const char* s) {
     return(len);
 }
 
-void* umemcpy(void *str1, const void *str2, long n) {
+void umemcpy(void *str1, const void *str2, long n) {
 
     long i = 0;
     uint8_t *dest8 = (uint8_t*)str1;

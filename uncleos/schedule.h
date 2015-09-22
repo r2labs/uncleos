@@ -25,11 +25,11 @@ extern "C"
 static sched_task_pool SCHEDULER_TASK_QUEUES[SCHEDULER_MAX_THREADS];
 
 /*! Doubly linked list of unused task queues */
-volatile static sched_task_pool* SCHEDULER_UNUSED_QUEUES = NULL;
+static sched_task_pool* SCHEDULER_UNUSED_QUEUES = NULL;
 
 /*! UTHash of live task queues */
 /* for now it's a utlist though, don't get confused */
-volatile static sched_task_pool* SCHEDULER_QUEUES = NULL;
+static sched_task_pool* SCHEDULER_QUEUES = NULL;
 
 /*! Statically allocated task metadata structures for the scheduler to
  *  manage */
@@ -44,7 +44,7 @@ void schedule_init();
 
 void schedule(task_t, frequency_t);
 
-sched_task_pool* schedule_hash_find_int(volatile sched_task_pool* queues, 
+sched_task_pool* schedule_hash_find_int(sched_task_pool* queues,
                                         frequency_t target_frequency);
 
 void schedule_hash_add_int(sched_task_pool* queues, sched_task_pool* add);

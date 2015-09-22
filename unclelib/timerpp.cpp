@@ -90,17 +90,19 @@ uint32_t timer::ack() {
 
 uint32_t timer::get() {
 
+    uint32_t ret;
     switch(subtimer) {
     case TIMER_A:
     case TIMER_BOTH:
-        TimerValueGet(base, TIMER_A);
+        ret = TimerValueGet(base, TIMER_A);
         break;
     case TIMER_B:
-        TimerValueGet(base, TIMER_B);
+        ret = TimerValueGet(base, TIMER_B);
         break;
     default:
         while (1) {}
     }
+    return ret;
 }
 
 const subtimer_t timer::get_subtimer() {

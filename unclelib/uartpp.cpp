@@ -57,7 +57,9 @@ void uart::send_string(const char* str) {
     }
 }
 
+#ifdef UART_BUFFERED
 static uint32_t g_ui32Base = UART0_BASE;
+#endif
 static const char * const g_pcHex = "0123456789abcdef";
 
 int

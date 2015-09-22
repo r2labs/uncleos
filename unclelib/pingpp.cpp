@@ -84,7 +84,7 @@ void ping::stop() {
     sem.reset();
 }
 
-uint32_t ping::handle_timer() {
+void ping::handle_timer() {
 
     tim.ack();
 
@@ -106,7 +106,7 @@ uint32_t ping::handle_timer() {
     sem.post();
 }
 
-uint32_t ping::handle_gpio() {
+void ping::handle_gpio() {
 
     GPIOIntClear(base, pin);
 
@@ -125,8 +125,6 @@ uint32_t ping::handle_gpio() {
     } else {
         /* TODO: do something here? */
     }
-
-    return 0xDEADBEEF;
 }
 
 semaphore* ping::get_sem() {
@@ -136,7 +134,7 @@ semaphore* ping::get_sem() {
 
 int32_t ping::average() {
 
-    int32_t i, value;
+    uint32_t i, value;
     value = 0;
     for (i=0; i<buf.len; ++i) {
         value += buf.buf[i];

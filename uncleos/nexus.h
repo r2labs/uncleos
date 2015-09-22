@@ -49,8 +49,7 @@ typedef uint32_t frequency_t;
  *  restoration.
  *  \returns current PRIMASK
  */
-#pragma warn -rlv
-always static inline
+always inline
 int32_t StartCritical() {
     asm("MRS    R0, PRIMASK  ;// save old status\n");
     asm("CPSID  I            ;// mask all (except faults)\n");
@@ -59,8 +58,7 @@ int32_t StartCritical() {
 /*! End a critical section by restoring a previously saved PRIMASK.
  * \param PRIMASK to restore
  */
-#pragma warn -rlv
-always static inline
+always inline
 void EndCritical(int32_t primask) {
     /* asm("MSR    PRIMASK, R0\n"); */
 

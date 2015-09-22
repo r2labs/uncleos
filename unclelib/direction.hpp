@@ -15,6 +15,7 @@ public:
         case BACKWARD: return FORWARD;
         case LEFT: return RIGHT;
         case RIGHT: return LEFT;
+        default: return FORWARD;
         }
     }
 };

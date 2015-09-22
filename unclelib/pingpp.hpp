@@ -51,8 +51,8 @@ public:
     virtual void stop(void);
 
     /*! Acknowledge isr for sig. */
-    uint32_t handle_gpio(void);
-    uint32_t handle_timer(void);
+    void handle_gpio(void);
+    void handle_timer(void);
 
     /*! The ping sensor's semaphore */
     semaphore* get_sem(void);

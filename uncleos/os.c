@@ -13,17 +13,17 @@
 
 /*! A block of memory for each thread's local stack. */
 static int32_t OS_PROGRAM_STACKS[SCHEDULER_MAX_THREADS][OS_STACK_SIZE];
-volatile sched_task *executing;
-volatile sched_task_pool *pool;
+sched_task *executing;
+sched_task_pool *pool;
 
-volatile uint32_t clock = 0;
+uint32_t clock = 0;
 
 /*! Statically allocated array of periodic tasks arranged by
  *  increasing time-to-deadline. */
-volatile sched_task EDF[SCHEDULER_MAX_THREADS];
+sched_task EDF[SCHEDULER_MAX_THREADS];
 
 /*! Linked list of tasks (with different periods) ready to be run. */
-volatile sched_task* EDF_QUEUE = NULL;
+sched_task* EDF_QUEUE = NULL;
 
 bool OS_FIRST_RUN = true;
 
@@ -171,33 +171,33 @@ void os_launch() {
     os_running_threads = OS_NEXT_THREAD;
 
     /* acquire the pointer to the stack pointer here */
-    asm volatile("LDR     R0, =OS_NEXT_THREAD");
+    asm("LDR     R0, =OS_NEXT_THREAD");
 
     /* acquire the current value of the stack pointer */
-    asm volatile("LDR R0, [R0]");
-    asm volatile("LDR R0, [R0]");
+    asm("LDR R0, [R0]");
+    asm("LDR R0, [R0]");
 
     /* set the process stack value */
-    asm volatile("MSR MSP, R0");
+    asm("MSR MSP, R0");
 
     /* change EXC_RETURN for return on MSP */
-    /* asm volatile("ORR LR, LR, #4"); */
+    /* asm("ORR LR, LR, #4"); */
 
     /* change the active stack to use msp */
-    /* asm volatile("MRS R0, CONTROL"); */
-    /* asm volatile("ORR R0, R0, #2"); */
-    /* asm volatile("MSR CONTROL, R0"); */
+    /* asm("MRS R0, CONTROL"); */
+    /* asm("ORR R0, R0, #2"); */
+    /* asm("MSR CONTROL, R0"); */
 
-    asm volatile("POP     {R4-R11}");
+    asm("POP     {R4-R11}");
 
-    asm volatile("POP     {LR}");
-    asm volatile("POP     {R0-R3}");
+    asm("POP     {LR}");
+    asm("POP     {R0-R3}");
 
-    asm volatile("pop {r12, lr}");
-    asm volatile("CPSIE  I");
-    asm volatile("pop {pc}");
+    asm("pop {r12, lr}");
+    asm("CPSIE  I");
+    asm("pop {pc}");
 
-    asm volatile ("BX LR");
+    asm ("BX LR");
 }
 
 always inline
@@ -232,12 +232,12 @@ void _os_reset_thread_stack(tcb_t* tcb, task_t task) {
     #endif  /* OS_REGISTER_DEBUGGING_ENABLED */
 
     tcb->sp = (uint32_t*)(((uint32_t)hwcontext) - sizeof(swcontext_t));
-    asm volatile ("PUSH {R9, R10, R11, R12}");
-    asm volatile ( "mrs     r12, msp" );
-    asm volatile ( "mrs     r11, msp" );
-    asm volatile ( "mrs     r10, control" );
+    asm ("PUSH {R9, R10, R11, R12}");
+    asm ( "mrs     r12, msp" );
+    asm ( "mrs     r11, msp" );
+    asm ( "mrs     r10, control" );
 
-    asm volatile ("POP {R9, R10, R11, R12}");
+    asm ("POP {R9, R10, R11, R12}");
 }
 
 always inline static
@@ -288,26 +288,26 @@ void scheduler_reschedule(void) {
 /* this is the canonical code for edf scheduling */
 void SysTick_Handler() {
 
-    asm volatile("CPSID  I");
+    asm("CPSID  I");
 
     scheduler_reschedule();
 
-    asm volatile("CPSIE  I");
+    asm("CPSIE  I");
 }
 
 void PendSV_Handler() {
 
-    asm volatile("CPSID  I");
+    asm("CPSID  I");
 
     /* -------------------------------------------------- */
     /* phase 1: store context                             */
     /* -------------------------------------------------- */
 
     /* load the msp of thread A into r12 */
-    asm volatile("mrs     r12, msp" );
+    asm("mrs     r12, msp" );
 
     /* save thread A's registers into the msp */
-    asm volatile("stmdb   r12!, {r4 - r11, lr}");
+    asm("stmdb   r12!, {r4 - r11, lr}");
 
     /* -------------------------------------------------- */
     /* phase 2: os_running_threads manipulation    */
@@ -342,27 +342,27 @@ void PendSV_Handler() {
     #endif /* OS_TIME_PROFILING */
 
     /* load the value of os_running_threads */
-    asm volatile("LDR     R2, =os_running_threads");
+    asm("LDR     R2, =os_running_threads");
 
     /* r3 = *os_running_threads, of thread A */
-    asm volatile("LDR     R3, [R2]");
+    asm("LDR     R3, [R2]");
 
     /* load the value of os_running_threads->next into r1 */
-    asm volatile("LDR     R1, =OS_NEXT_THREAD");
-    asm volatile("LDR     R1, [R1]");
+    asm("LDR     R1, =OS_NEXT_THREAD");
+    asm("LDR     R1, [R1]");
 
     /* os_running_threads = OS_NEXT_THREAD */
-    asm volatile("STR     R1, [R2]");
+    asm("STR     R1, [R2]");
 
     /* -------------------------------------------------- */
     /* phase 3: load context                              */
     /* -------------------------------------------------- */
 
     /* store the msp from thread A */
-    asm volatile("str     r12, [r3, #0]");
+    asm("str     r12, [r3, #0]");
 
     /* load thread B's msp */
-    asm volatile("ldr     r12, [r1]");
+    asm("ldr     r12, [r1]");
 
     /* set the profiling data structures for the next thread */
     #ifdef OS_TIME_PROFILING_ENABLED
@@ -370,15 +370,15 @@ void PendSV_Handler() {
     #endif  /* OS_TIME_PROFILING_ENABLED */
 
     /* load thread B's context */
-    asm volatile("ldmia   r12!, {r4 - r11, lr}");
+    asm("ldmia   r12!, {r4 - r11, lr}");
 
     /* put thread B's msp into the arch msp register */
-    asm volatile("msr     msp, r12");
+    asm("msr     msp, r12");
 
     /* reenable interrupts */
-    asm volatile("CPSIE   I");
+    asm("CPSIE   I");
 
-    asm volatile ("bx lr");
+    asm ("bx lr");
 }
 
 /*! Put the invoking thread to sleep and let another thread take
@@ -393,8 +393,8 @@ void schedule(task_t task, frequency_t frequency_in_cycles) {
 
     /* deadline_t seriousness = DL_SOFT; */
 
-    volatile sched_task *ready_task = NULL;
-    volatile sched_task_pool *ready_queue = NULL;
+    sched_task *ready_task = NULL;
+    sched_task_pool *ready_queue = NULL;
 
     /* Grab a new task from the unused task pile */
     ready_task = SCHEDULER_UNUSED_TASKS;
@@ -451,11 +451,11 @@ void schedule_init() {
     }
 }
 
-sched_task_pool* schedule_hash_find_int(volatile sched_task_pool* queues, 
+sched_task_pool* schedule_hash_find_int(sched_task_pool* queues,
                                         frequency_t target_frequency) {
 
-    volatile sched_task_pool* start = queues;
-    volatile sched_task_pool* inspect = queues;
+    sched_task_pool* start = queues;
+    sched_task_pool* inspect = queues;
 
     if (!inspect) { return NULL; }
 
@@ -473,8 +473,8 @@ sched_task_pool* schedule_hash_find_int(volatile sched_task_pool* queues,
  *  this function */
 void edf_init() {
 
-    volatile sched_task_pool *start = SCHEDULER_QUEUES;
-    volatile sched_task_pool *next = start->next;
+    sched_task_pool *start = SCHEDULER_QUEUES;
+    sched_task_pool *next = start->next;
 
     /* avoid the NULL EDF_QUEUE to allow optimized form of `edf_insert' */
     DL_EDF_INSERT(EDF_QUEUE, start->queue);
@@ -489,7 +489,7 @@ void edf_init() {
 
 void edf_insert(sched_task* task) {
 
-    volatile sched_task *elt = EDF_QUEUE;
+    sched_task *elt = EDF_QUEUE;
 
     while(elt && task->absolute_deadline > elt->absolute_deadline) {
         elt = elt->pri_next;
@@ -510,8 +510,8 @@ void edf_insert(sched_task* task) {
 
 tcb_t* edf_pop() {
 
-    volatile sched_task *executing = EDF_QUEUE;
-    volatile sched_task_pool *pool = SCHEDULER_QUEUES;
+    sched_task *executing = EDF_QUEUE;
+    sched_task_pool *pool = SCHEDULER_QUEUES;
 
     /* DL_EDF_DELETE(EDF_QUEUE, elt); */
     EDF_QUEUE = EDF_QUEUE->pri_next;

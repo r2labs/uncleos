@@ -35,9 +35,9 @@ void ctlsys::enable_periph(uint32_t sys_periph) {
     case CAN1_BASE:       periph_base = SYSCTL_PERIPH_CAN1; break;
     default: while(1) {}
     }
-    uint32_t ui32Status = static_StartCritical();
+    uint32_t ui32Status = StartCritical();
     SysCtlPeripheralEnable(periph_base);
-    static_EndCritical(ui32Status);
+    EndCritical(ui32Status);
 }
 
 uint32_t ctlsys::timer_timeout_from_subtimer(uint32_t subtimer) {

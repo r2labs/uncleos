@@ -47,14 +47,12 @@ can::can(memory_address_t can_base, uint32_t can_interrupt,
 
     init();
 
-    switch(can_sender) {
-    case true:
+    if (can_sender) {
         sCANMessage.ui32MsgID = 1;
         sCANMessage.ui32MsgIDMask = 0;
         sCANMessage.ui32Flags = MSG_OBJ_TX_INT_ENABLE;
         sCANMessage.ui32MsgLen = msg_length;
-        break;
-    case false:
+    } else {
         // Initialize a message object to be used for receiving CAN messages with
         // any CAN ID.  In order to receive any CAN ID, the ID and mask must both
         // be set to 0, and the ID filter enabled.
@@ -67,8 +65,6 @@ can::can(memory_address_t can_base, uint32_t can_interrupt,
         // interrupt will occur.  Use message object 1 for receiving
         // messages (this is distinct from the CAN ID).
         CANMessageSet(base, CAN_MSG_OBJ, &sCANMessage, MSG_OBJ_TYPE_RX);
-        break;
-    default: while(1) {}
     }
 }
 
@@ -135,10 +131,10 @@ void can::transmit(uint8_t* data, uint32_t length, uint32_t id) {
 uint32_t can::count_message() {
 
     uint32_t ret;
-    switch(sender) {
-    case true:  ret = ++messages_sent; break;
-    case false: ret = ++messages_received; break;
-    default: while(1) {}
+    if (sender) {
+        ret = ++messages_sent;
+    } else {
+        ret = ++messages_received;
     }
     return ret;
 }

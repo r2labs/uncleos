@@ -65,8 +65,8 @@ void drive::steer(uint32_t left_sens, uint32_t left_front_sens,
     int32_t side_error = ((int32_t)left_sens - (int32_t)right_sens);
     integral_side_error = clamp(integral_side_error + side_error, -motor::pwm_max_period/8, motor::pwm_max_period/8);
 
-    int32_t should_use_side_sensors = front_sens < 200;
-    should_use_side_sensors = 0;
+    /* int32_t should_use_side_sensors = front_sens < 200; */
+    /* should_use_side_sensors = 0; */
 
     int32_t should_slow_down = front_sens < 200;
 
