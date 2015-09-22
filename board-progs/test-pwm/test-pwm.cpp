@@ -8,7 +8,7 @@
 #include "unclelib/bufferpp.hpp"
 #include "unclelib/ctlsysctl.hpp"
 #include "unclelib/math.hpp"
-#include "unclelib/motorpp.hpp"
+#include "unclelib/servo.hpp"
 #include "unclelib/shellpp.hpp"
 #include "unclelib/switchpp.hpp"
 #include "unclelib/uartpp.hpp"
@@ -35,7 +35,7 @@ blinker blink;
 uart uart0;
 shell shell0;
 
-motor motor0, motor1;
+servo servo0, servo1, servo2, servo3, servo4;
 semaphore motor_start, motor_stop;
 
 lswitch switch0;
@@ -95,12 +95,17 @@ void switch_responder() {
             if(switch0.debounced_data == BUTTON_LEFT) {
                 blink.toggle(PIN_RED);
                 duty_cycle = clamp(duty_cycle-1, 0, 200);
-                motor0.set(duty_cycle*motor::pwm_max_period/200);
             } else if(switch0.debounced_data == BUTTON_RIGHT) {
                 blink.toggle(PIN_BLUE);
                 duty_cycle = clamp(duty_cycle+1, 0, 200);
-                motor0.set(duty_cycle*motor::pwm_max_period/200);
             }
+
+            servo0.set(duty_cycle*servo::pwm_max_period/200);
+            servo1.set(duty_cycle*servo::pwm_max_period/200);
+            servo2.set(duty_cycle*servo::pwm_max_period/200);
+            servo3.set(duty_cycle*servo::pwm_max_period/200);
+            servo4.set(duty_cycle*servo::pwm_max_period/200);
+
             uart0.atomic_printf("%i\n", duty_cycle/2);
 
             /* while (++counter < counter_max) { } */
@@ -135,12 +140,23 @@ int main(void) {
 
     duty_cycle = 15;
 
-    shell0 = shell(&uart0, &motor_start, &motor_stop);
-    motor0 = motor(GPIO_PORTA_BASE, GPIO_PIN_6, PWM0_BASE, PWM_GEN_0, PWM_OUT_0);
-    motor1 = motor(GPIO_PORTA_BASE, GPIO_PIN_7, PWM0_BASE, PWM_GEN_0, PWM_OUT_1);
+    shell0 = shell(&uart0);
 
-    motor0.set(duty_cycle*motor::pwm_max_period/200);
-    motor0.start();
+    servo0 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0);
+    servo0.set(duty_cycle*servo::pwm_max_period/200);
+    servo0.start();
+    servo1 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1);
+    servo1.set(duty_cycle*servo::pwm_max_period/200);
+    servo1.start();
+    servo2 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_2);
+    servo2.set(duty_cycle*servo::pwm_max_period/200);
+    servo2.start();
+    servo3 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_3);
+    servo3.set(duty_cycle*servo::pwm_max_period/200);
+    servo3.start();
+    servo4 = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_4);
+    servo4.set(duty_cycle*servo::pwm_max_period/200);
+    servo4.start();
 
     switch0 = lswitch(GPIO_PORTF_BASE, BUTTONS_BOTH,
                       &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES,
@@ -148,7 +164,6 @@ int main(void) {
 
     os_threading_init();
     schedule(shell_handler, 200);
-    /* schedule(thread_uart_update, 200); */
     schedule(switch_responder, 200);
     os_launch();
 }
