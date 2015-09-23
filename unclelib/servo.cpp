@@ -15,10 +15,15 @@
 servo::servo() {}
 
 servo::servo(memory_address_t pwm_base, memory_address_t pwm_gen,
-             memory_address_t pwm_out) {
+             memory_address_t pwm_out, uint32_t min, uint32_t max,
+             uint32_t rest) {
     this->pwm_base = pwm_base;
     this->pwm_gen = pwm_gen;
     this->pwm_out = pwm_out;
+
+    this->min_duty = min;
+    this->max_duty = max;
+    this->rest_duty = rest;
 
     ctlsys::enable_periph(pwm_base);
 
@@ -26,13 +31,15 @@ servo::servo(memory_address_t pwm_base, memory_address_t pwm_gen,
 }
 
 uint32_t servo::set(uint32_t pwm_clocks) {
-    pwm_clocks = clamp(pwm_clocks, 0, pwm_max_period);
+    pwm_clocks = clamp(pwm_clocks, min_duty, max_duty);
     PWMPulseWidthSet(pwm_base, pwm_out, pwm_clocks);
-    return pwm_clocks;
+    current_duty = pwm_clocks;
+    return current_duty;
 }
 
 void servo::start() {
     PWMGenEnable(pwm_base, pwm_gen);
+    set(rest_duty);
 }
 
 void servo::stop() {
@@ -97,5 +104,5 @@ void servo::pwm_init() {
 }
 
 uint32_t servo::get() {
-    return duty_period;
+    return current_duty;
 }

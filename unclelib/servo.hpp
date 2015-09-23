@@ -17,17 +17,21 @@ private:
     memory_address_t pwm_out;
 
     uint32_t pwm_period;
-    uint32_t duty_period;
+
+    uint32_t current_duty;
 
     void pwm_init(void);
 
     bool enabled;
 
 public:
+    uint32_t min_duty, max_duty, rest_duty;
+
     servo();
 
     servo(memory_address_t pwm_base, memory_address_t pwm_gen,
-          memory_address_t pwm_out);
+          memory_address_t pwm_out, uint32_t min,
+          uint32_t max, uint32_t rest);
 
     /*! Cut all power to the motor. */
     void stop(void);
