@@ -30,13 +30,13 @@ private:
     uint32_t baud_rate;
     memory_address_t channel;
     memory_address_t interrupt;
-    buffer<char, UART_BUFFER_LENGTH>* uart_rx_buffer;
 
     void vprintf(const char *pcString, va_list vaArgP);
 
 public:
      /*! Flag for proper handling of newlines input from terminal. */
     static bool LAST_WAS_CR;
+    buffer<char, UART_BUFFER_LENGTH>* uart_rx_buffer;
 
     uart();
     uart(memory_address_t uart_channel, memory_address_t uart_interrupt,

@@ -118,17 +118,7 @@ void switch_responder() {
 }
 
 void shell_handler() {
-
-    while(1) {
-        if(UART0_RX_SEM.guard()) {
-
-            bool ok;
-            char recv = UART0_RX_BUFFER.get(ok);
-
-            if(ok) { shell0.accept(recv); }
-        }
-        os_surrender_context();
-    }
+    shell0.shell_handler();
 }
 
 int main(void) {

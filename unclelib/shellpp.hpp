@@ -42,6 +42,8 @@ private:
     /*! Return the length of a null-terminated string. */
     uint32_t strlen(const char*);
 
+    void umemcpy(void *str1, const void *str2, long n);
+
     static exit_status_t help_info(const char* args);
     static exit_status_t doctor(const char* args);
     static exit_status_t witch(const char* args);
@@ -89,7 +91,7 @@ public:
     /*! Execute this command. */
     exit_status_t execute_command();
 
-    
+
     void shell_handler();
 };
 
