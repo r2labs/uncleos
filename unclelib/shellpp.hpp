@@ -21,7 +21,7 @@
 #define SHELL_MAX_PS1_LENGTH 4
 
 /*! Maximum length of shell input per command */
-#define SHELL_BUFFER_LENGTH 32
+#define SHELL_BUFFER_LENGTH (uint32_t)32
 
 #define UART_VERBOSE true
 
@@ -88,6 +88,9 @@ public:
 
     /*! Execute this command. */
     exit_status_t execute_command();
+
+    
+    void shell_handler();
 };
 
 #endif

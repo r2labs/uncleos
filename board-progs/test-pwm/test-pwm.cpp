@@ -26,7 +26,7 @@
 
 extern "C" void __cxa_pure_virtual() { while (1) {} }
 
-#define UART0_RX_BUFFER_SIZE 8
+#define UART0_RX_BUFFER_SIZE 32
 static semaphore UART0_RX_SEM;
 static buffer<char, UART0_RX_BUFFER_SIZE> UART0_RX_BUFFER;
 
@@ -139,7 +139,7 @@ int main(void) {
     blink = blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
-    uart0 = uart(UART0_BASE, INT_UART0);
+    uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
     duty_cycle = 15;
 

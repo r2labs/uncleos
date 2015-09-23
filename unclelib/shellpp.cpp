@@ -196,18 +196,6 @@ void shell::backspace() {
     }
 }
 
-exit_status_t shell::motor_start(const char* args) {
-
-    shell::m_start->post();
-    return EXIT_SUCCESS;
-}
-
-exit_status_t shell::motor_stop(const char* args) {
-
-    shell::m_stop->post();
-    return EXIT_SUCCESS;
-}
-
 /*! You know how I know this shell sucks? You can't even do this,
  *  because uart0 is a non-static context and this is a static
  *  context. eff this implementation of system */
@@ -246,10 +234,6 @@ exit_status_t shell::execute_command() {
     } else if(shell_command_is("jester")) {
         exit_code = jester(args);
         /* begin motor control commands */
-    } else if(shell_command_is("start")) {
-        exit_code = motor_start(args);
-    } else if(shell_command_is("stop")) {
-        exit_code = motor_stop(args);
     } else {
         uart0->atomic_printf("%s is not a recognized command.\n\r", buf.buf);
     }
@@ -265,3 +249,18 @@ exit_status_t shell::execute_command() {
 
     return exit_code;
 }
+
+void shell_handler() {
+
+    while(1) {
+        if(UART0_RX_SEM.guard()) {
+
+            bool ok;
+            char recv = UART0_RX_BUFFER.get(ok);
+
+            if(ok) { shell0.accept(recv); }
+        }
+        os_surrender_context();
+    }
+}
+

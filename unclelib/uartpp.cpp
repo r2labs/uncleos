@@ -22,11 +22,13 @@ uart::uart() {}
 
 /* \warning currently only allows uart from GPIO_PORTA on the TM4C123GXL */
 uart::uart(memory_address_t uart_channel, memory_address_t uart_interrupt,
+           buffer<char, UART_BUFFER_LENGTH>* rx_buffer, 
            uint32_t uart_baud_rate) {
 
     baud_rate = uart_baud_rate;
     channel = uart_channel;
     interrupt = uart_interrupt;
+    uart_rx_buffer = rx_buffer;
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0 +
                            (uart_channel - UART0_BASE) / 0x1000);
@@ -390,21 +392,35 @@ uint32_t uart::ack(void) {
     uint32_t ui32Status;
     ui32Status = UARTIntStatus(channel, true);
     UARTIntClear(channel, ui32Status);
-    return ui32Status;
-}
 
-char* uart::get_string(const uint32_t length) {
-
-    uint32_t remaining_chars = (uint32_t) length;
-
-    ack();
-
-    while(UARTCharsAvail(channel) && (remaining_chars > 0)) {
-        buffer[remaining_chars-- - length] = get_char();
+    if(!(ui32Status & (UART_INT_RX | UART_INT_RT))) {
+        return ui32Status;
     }
-    buffer[length] = 0;
 
-    return buffer;
+    while(UARTCharsAvail(channel)) {
+        char recv = get_char();
+
+        /* Regardless of newline received, our convention is to
+         * mark end-of-lines in a buffer with the CR character. */
+        switch(recv) {
+        case '\n':
+            if (uart::LAST_WAS_CR) {
+                uart::LAST_WAS_CR = false;
+                continue;
+            }
+            break;
+        case '\r':
+            uart::LAST_WAS_CR = true;
+            break;
+        case 0x1b:
+            recv = '\r';
+            break;
+        default: break;
+        }
+        uart_rx_buffer->notify((const int8_t) recv);
+    }
+
+    return ui32Status;
 }
 
 void uart::start(void) {

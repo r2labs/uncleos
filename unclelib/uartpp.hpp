@@ -6,8 +6,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "interruptable.hpp"
+#include "bufferpp.hpp"
 #include "criticalpp.hpp"
+#include "interruptable.hpp"
+
+#define UART_BUFFER_LENGTH 32
 
 /*! \addtogroup UART
  * @{
@@ -15,9 +18,6 @@
 
 /*! Default uart baud rate in today's modern world. */
 #define UART_DEFAULT_BAUD_RATE 115200
-
-/*! Default max length string that uart may return */
-const uint32_t UART_DEFAULT_MAX_GET_STRING_LENGTH = 32;
 
 /*! A reference to a memory location on the ARM Cortex M4. */
 typedef uint32_t memory_address_t;
@@ -30,6 +30,7 @@ private:
     uint32_t baud_rate;
     memory_address_t channel;
     memory_address_t interrupt;
+    buffer<char, UART_BUFFER_LENGTH>* uart_rx_buffer;
 
     void vprintf(const char *pcString, va_list vaArgP);
 
@@ -37,11 +38,10 @@ public:
      /*! Flag for proper handling of newlines input from terminal. */
     static bool LAST_WAS_CR;
 
-    char buffer[UART_DEFAULT_MAX_GET_STRING_LENGTH];
-
     uart();
     uart(memory_address_t uart_channel, memory_address_t uart_interrupt,
-        uint32_t uart_baud_rate = UART_DEFAULT_BAUD_RATE);
+         buffer<char, UART_BUFFER_LENGTH>* rx_buffer,
+         uint32_t uart_baud_rate = UART_DEFAULT_BAUD_RATE);
 
     /*! Enable the uart. */
     virtual void start(void);
@@ -63,9 +63,6 @@ public:
 
     /*! Receive a char. */
     char get_char(void);
-
-    /*! Receive a string of LENGTH characters. */
-    char* get_string(const uint32_t length);
 
     /*! Printf over uart. */
     void printf(const char *pcString, ...);
