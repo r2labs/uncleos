@@ -1,6 +1,8 @@
 #include "shellpp.hpp"
 #include "blinker.hpp"
 
+#include "uncleos/os.h"
+
 #include "inc/hw_memmap.h"
 
 #include "kbd.h"
@@ -127,7 +129,7 @@ uint32_t shell::strlen(const char* s) {
     return(len);
 }
 
-void umemcpy(void *str1, const void *str2, long n) {
+void shell::umemcpy(void *str1, const void *str2, long n) {
 
     long i = 0;
     uint8_t *dest8 = (uint8_t*)str1;
@@ -144,7 +146,7 @@ void shell::clear_buffer() {
 
 void shell::set_ps1(char* new_ps1) {
 
-    umemcpy(ps1, new_ps1, strlen(new_ps1));
+    this->umemcpy(ps1, new_ps1, strlen(new_ps1));
 }
 
 /*! \note has the side effect of clearing the shell buffer */
@@ -250,15 +252,15 @@ exit_status_t shell::execute_command() {
     return exit_code;
 }
 
-void shell_handler() {
+void shell::shell_handler() {
 
     while(1) {
-        if(UART0_RX_SEM.guard()) {
+        if(uart0->uart_rx_buffer->sem->guard()) {
 
             bool ok;
-            char recv = UART0_RX_BUFFER.get(ok);
+            char recv = uart0->uart_rx_buffer->get(ok);
 
-            if(ok) { shell0.accept(recv); }
+            if(ok) { accept(recv); }
         }
         os_surrender_context();
     }
