@@ -19,6 +19,8 @@ void *memcpy(void *str1, const void *str2, long n) {
     }
 }
 
+/*! \note this implementation does not compare length, thus unique
+ *  abbreviations are fair game (gdb style) */
 int ustrncmp(const char *s1, const char *s2, uint32_t n) {
 
     /* Loop while there are more characters. */
@@ -53,10 +55,21 @@ int ustrcmp(const char* s1, const char* s2) {
     return(ustrncmp(s1, s2, (uint32_t)-1));
 }
 
-void ustrcpy(char* dest, const char* source) {
+void _ustrcpy(char* dest, const char* source) {
     uint32_t i = 0;
     while (1) {
         dest[i] = source[i];
         if (dest[i++] == '\0') { break; }
     }
+}
+
+void* umemset(void* b, int c, int len) {
+
+    unsigned char *p = (unsigned char *) b;
+    while(len > 0) {
+        *p = c;
+        ++p;
+        --len;
+    }
+    return b;
 }

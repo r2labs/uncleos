@@ -75,7 +75,7 @@ extern "C"
 #endif
 
 /*! A duplicate of the c standard memcpy function. */
-void* umemcpy(void*, const void*, long);
+void* memcpy(void*, const void*, long);
 
 /*! A duplicate of the c standard strcmp function. */
 int ustrcmp(const char*, const char*);
@@ -84,10 +84,13 @@ int ustrcmp(const char*, const char*);
 int ustrncmp(const char*, const char*, uint32_t);
 
 /*! A duplicate of the c standard strcpy function.  */
-void ustrcpy(char*, const char*);
+void _ustrcpy(char*, const char*);
 
 /*! A duplicate of the c standard strlen function. */
 uint32_t ustrlen(const char *s);
+
+/*! A duplicate of the c standard umemset function. */
+void* umemset(void* b, int c, int len);
 
 #ifdef __cplusplus
 }

@@ -12,9 +12,7 @@
  * @{
  */
 
-#define SHELL_COMMANDS 2
-
-#define SYSTEM_MAX_NAME_LENGTH 10
+#define SYSTEM_COMMAND_NAME_MAX_LENGTH 10
 #define SYSTEM_MAX_COMMANDS    5
 
 /*! PS1 maximum length */
@@ -28,6 +26,19 @@
 typedef uint8_t exit_status_t;
 typedef exit_status_t (*sys_cmd)(const char*);
 
+struct system_command;
+typedef struct system_command {
+    bool valid;
+    char name[SYSTEM_COMMAND_NAME_MAX_LENGTH];
+    int(*command)(char* args);
+    system_command* next;
+    system_command* prev;
+} system_command;
+
+/*! Iterator optimized for size that is guaranteed to be able to
+ * iterate over \SYSTEM_COMMANDS. */
+typedef uint8_t system_iterator;
+
 class shell {
 private:
     uart* uart0;
@@ -35,14 +46,12 @@ private:
     /* Wondering why there's a +1 here? Waldo has the answers */
     char ps1[SHELL_MAX_PS1_LENGTH+1];
 
-    /*! Execute a system command. */
-    int32_t ustrncmp(const char*, const char*, uint32_t);
-    void* memset(void* b, int c, int len);
-
-    /*! Return the length of a null-terminated string. */
-    uint32_t strlen(const char*);
-
-    void umemcpy(void *str1, const void *str2, long n);
+    /* Circular doubly-linked list containing all registered commands. */
+    system_command SYSTEM_COMMANDS[SYSTEM_MAX_COMMANDS];
+    /* Circular doubly-linked list containing all unregistered commands. */
+    system_command* unregistered_commands;
+    /* Circular doubly-linked list containing all registered commands. */
+    system_command* registered_commands;
 
     static exit_status_t help_info(const char* args);
     static exit_status_t doctor(const char* args);
@@ -51,9 +60,6 @@ private:
 
     static exit_status_t motor_start(const char* args);
     static exit_status_t motor_stop(const char* args);
-
-    static char system_command_names[SHELL_COMMANDS][SYSTEM_MAX_NAME_LENGTH];
-    static sys_cmd system_command_funcs[SHELL_COMMANDS];
 
     static void ustrcpy(char* dest, const char* source);
 
@@ -87,6 +93,12 @@ public:
 
     /*! Accept a char, shell will call \type or \backspace appropriately. */
     void accept(char ch);
+
+    void register_command(char* command_name, int(*command)(char* args));
+
+    void deregister_command(char* command_name);
+
+    system_command* command_from_name(const char* command_name);
 
     /*! Execute this command. */
     exit_status_t execute_command();

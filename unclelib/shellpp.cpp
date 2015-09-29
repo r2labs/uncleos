@@ -1,5 +1,7 @@
 #include "shellpp.hpp"
 #include "blinker.hpp"
+#include "uncleos/utlist.h"
+#include "uncleos/nexus.c"
 
 #include "uncleos/os.h"
 
@@ -14,70 +16,21 @@
 #define shell_command_is(a)                     \
     0 == ustrncmp(a, (const char*) buf.buf, buf.length())
 
-char shell::system_command_names[SHELL_COMMANDS][SYSTEM_MAX_NAME_LENGTH];
-sys_cmd shell::system_command_funcs[SHELL_COMMANDS];
-
 semaphore* shell::m_start;
 semaphore* shell::m_stop;
-
-exit_status_t shell::doctor(const char* args) {
-
-    blinker blink = blinker(GPIO_PORTF_BASE);
-    blink.toggle(PIN_RED);
-    return EXIT_SUCCESS;
-}
-
-exit_status_t shell::witch(const char* args) {
-
-    blinker blink = blinker(GPIO_PORTF_BASE);
-    blink.toggle(PIN_GREEN);
-    return EXIT_SUCCESS;
-}
-
-exit_status_t shell::jester(const char* args) {
-
-    blinker blink = blinker(GPIO_PORTF_BASE);
-    blink.toggle(PIN_BLUE);
-    return EXIT_SUCCESS;
-}
-
-/*! \note this implementation does not compare length, thus unique
- *  abbreviations are fair game (gdb style) */
-int32_t shell::ustrncmp(const char *s1, const char *s2, uint32_t n) {
-
-    /* Loop while there are more characters. */
-    while(n) {
-        /* If we reached a NULL in both strings, they must be equal so
-         * we end the comparison and return 0 */
-        if((!*s1 || (*s1 == ' ')) && (!*s2 || (*s2 == ' '))) {
-            return(0);
-        }
-
-        if(*s2 < *s1) { return(1); }
-        if(*s1 < *s2) { return(-1); }
-
-        s1++;
-        s2++;
-        n--;
-    }
-    /* If we fall out, the strings must be equal for at least the
-     * first n characters so return 0 to indicate this. */
-    return 0;
-}
-
-void shell::ustrcpy(char* dest, const char* source) {
-
-    uint32_t i = 0;
-    while (1) {
-        dest[i] = source[i];
-        if (source[i++] == '\0') { break; }
-    }
-}
 
 void shell::init() {
 
     buf = buffer<char, SHELL_BUFFER_LENGTH>();
     init_ps1();
+
+    /* initialize the system commands */
+    unregistered_commands = 0;
+    registered_commands = 0;
+    system_iterator i;
+    for (i=0; i<SYSTEM_MAX_COMMANDS; ++i) {
+        CDL_PREPEND(unregistered_commands, &SYSTEM_COMMANDS[i]);
+    }
 }
 
 shell::shell() {
@@ -112,33 +65,6 @@ void shell::init_ps1() {
     print_ps1();
 }
 
-void* shell::memset(void* b, int c, int len) {
-
-    unsigned char *p = (unsigned char *) b;
-    while(len > 0) {
-        *p = c;
-        ++p;
-        --len;
-    }
-    return b;
-}
-
-uint32_t shell::strlen(const char* s) {
-    uint32_t len = 0;
-    while(s[len]) { ++len; }
-    return(len);
-}
-
-void shell::umemcpy(void *str1, const void *str2, long n) {
-
-    long i = 0;
-    uint8_t *dest8 = (uint8_t*)str1;
-    uint8_t *source8 = (uint8_t*)str2;
-    for (i=0; i<n; ++i) {
-        dest8[i] = source8[i];
-    }
-}
-
 void shell::clear_buffer() {
 
     buf.clear();
@@ -146,7 +72,7 @@ void shell::clear_buffer() {
 
 void shell::set_ps1(char* new_ps1) {
 
-    this->umemcpy(ps1, new_ps1, strlen(new_ps1));
+    memcpy(ps1, new_ps1, ustrlen(new_ps1));
 }
 
 /*! \note has the side effect of clearing the shell buffer */
@@ -171,6 +97,89 @@ bool shell::type(char ch) {
     return ret;
 }
 
+void shell::backspace() {
+
+    bool ok;
+    buf.get(ok);
+    if (ok) {
+        uart0->atomic_printf("\b \b");
+    }
+}
+
+void shell::register_command(char* command_name, int(*command)(char* args)) {
+    /* Grab the first free command, move it from the unregisted to the
+     * registered pile, and populate it with this function's
+     * arguments */
+    system_command* sys_command = unregistered_commands;
+    CDL_DELETE(unregistered_commands, sys_command);
+    CDL_PREPEND(registered_commands, sys_command);
+
+    sys_command->valid = true;
+    umemset(sys_command->name, 0, SYSTEM_MAX_COMMANDS);
+    _ustrcpy(sys_command->name, command_name);
+    sys_command->command = command;
+}
+
+void shell::deregister_command(char* command_name) {
+
+    /* Grab the structure of the command to deregister and invaldiate
+     * the metadata. Move it from the registered to the unregistered
+     * pile. */
+    system_command* command = command_from_name(command_name);
+    command->valid = false;
+    CDL_DELETE(registered_commands, command);
+    CDL_PREPEND(unregistered_commands, command);
+}
+
+system_command* shell::command_from_name(const char* command_name) {
+
+    system_iterator i=0;
+    system_command *ret;
+    while(i<SYSTEM_MAX_COMMANDS &&
+          0 != ustrcmp(SYSTEM_COMMANDS[i].name, command_name)) {
+        ++i;
+    }
+
+    /* Graceful exit on invalid command entry */
+    if (i >= SYSTEM_MAX_COMMANDS) {
+        ret = 0;
+    } else {
+        ret = &SYSTEM_COMMANDS[i];
+    }
+    return ret;
+}
+
+exit_status_t shell::execute_command() {
+
+    /* Null terminate to separate the cmd from the args */
+    uint8_t len = buf.length();
+    uint8_t idx = 0;
+    while((idx < len) && (buf.buf[idx] != ' ')) {
+        ++idx;
+    }
+    buf.buf[idx] = 0;
+
+    /* Clear some space between the user input and this cmd output */
+    uart0->atomic_printf("\r\n");
+
+    char* args = &buf.buf[idx+1];
+
+    system_command* sys_command = command_from_name(buf.buf);
+
+    exit_status_t exit_code = sys_command ? sys_command->command(args) : 1;
+
+#ifdef SHELL_VERBOSE
+    if (exit_code != EXIT_SUCCESS) {
+        uart0->atomic_printf("\n\rnonzero exit code: %d", exit_code);
+    }
+#endif
+
+    /* Prepare for the next command */
+    print_ps1();
+
+    return exit_code;
+}
+
 void shell::accept(char ch) {
 
     switch(ch) {
@@ -187,69 +196,6 @@ void shell::accept(char ch) {
         type(ch);
         break;
     }
-}
-
-void shell::backspace() {
-
-    bool ok;
-    buf.get(ok);
-    if (ok) {
-        uart0->atomic_printf("\b \b");
-    }
-}
-
-/*! You know how I know this shell sucks? You can't even do this,
- *  because uart0 is a non-static context and this is a static
- *  context. eff this implementation of system */
-/* exit_status_t shell::help_info(const char* args) { */
-
-/*     uart0->atomic_printf("Recognized commands:\n"); */
-/*     uart0->atomic_printf("help\n"); */
-/*     uart0->atomic_printf("doctor\n"); */
-/*     uart0->atomic_printf("witch\n"); */
-/*     uart0->atomic_printf("jester\n"); */
-/*     uart0->atomic_printf("start\n"); */
-/*     uart0->atomic_printf("stop\n"); */
-/*     return EXIT_SUCCESS; */
-/* } */
-
-exit_status_t shell::execute_command() {
-
-    /* Null terminate to separate the cmd from the args */
-    uint8_t len = buf.length();
-    uint8_t idx = 0;
-    while((idx < len) && (buf.buf[idx] != ' ')) {
-        ++idx;
-    }
-    buf.buf[idx] = 0;
-
-    /* Clear some space between the user input and this cmd output */
-    uart0->atomic_printf("\r\n");
-
-    exit_status_t exit_code = (exit_status_t) 0xDEADBEEF;
-    const char* args = &buf.buf[idx+1];
-    /* Waldo says this line requires the extra char to be a 0 */
-    if(shell_command_is("doctor")) {
-        exit_code = doctor(args);
-    } else if(shell_command_is("witch")) {
-        exit_code = witch(args);
-    } else if(shell_command_is("jester")) {
-        exit_code = jester(args);
-        /* begin motor control commands */
-    } else {
-        uart0->atomic_printf("%s is not a recognized command.\n\r", buf.buf);
-    }
-
-#ifdef SHELL_VERBOSE
-    if (exit_code != EXIT_SUCCESS) {
-        uart0->atomic_printf("\n\rnonzero exit code: %d", exit_code);
-    }
-#endif
-
-    /* Prepare for the next command */
-    print_ps1();
-
-    return exit_code;
 }
 
 void shell::shell_handler() {

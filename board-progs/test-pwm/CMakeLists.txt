@@ -7,5 +7,5 @@ include_directories(../../)
 
 add_executable(test-pwm ${test-pwm-srcs})
 target_link_libraries(test-pwm driverlib)
-target_link_libraries(test-pwm unclelib)
 target_link_libraries(test-pwm uncleos)
+target_link_libraries(test-pwm unclelib)

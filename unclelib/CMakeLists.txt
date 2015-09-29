@@ -10,3 +10,4 @@ set (unclelib-src blinker.cpp timerpp.cpp uartpp.cpp shellpp.cpp
 include_directories(../)
 
 add_library (unclelib STATIC ${unclelib-src})
+target_link_libraries(unclelib uncleos)

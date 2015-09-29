@@ -121,6 +121,10 @@ void shell_handler() {
     shell0.shell_handler();
 }
 
+int test_cmd(char* args) {
+    uart0.atomic_printf("%s", args);
+}
+
 int main(void) {
 
     ctlsys::set_clock();
@@ -134,21 +138,22 @@ int main(void) {
     duty_cycle = 15;
 
     shell0 = shell(&uart0);
+    shell0.register_command("test", test_cmd);
 
-    base_rotate = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 1200, 5000, 3000);
-    base_rotate.start();
-    shoulder = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 1200, 4800, 3000);
-    shoulder.start();
-    elbow = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 1400, 4200, 3800);
-    elbow.start();
-    wrist = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 1200, 5000, 3000);
-    wrist.start();
-    gripper = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 2000, 5000, 2000);
-    gripper.start();
+    /* base_rotate = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 1200, 5000, 3000); */
+    /* base_rotate.start(); */
+    /* shoulder = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 1200, 4800, 3000); */
+    /* shoulder.start(); */
+    /* elbow = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 1400, 4200, 3800); */
+    /* elbow.start(); */
+    /* wrist = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 1200, 5000, 3000); */
+    /* wrist.start(); */
+    /* gripper = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 2000, 5000, 2000); */
+    /* gripper.start(); */
 
-    switch0 = lswitch(GPIO_PORTF_BASE, BUTTONS_BOTH,
-                      &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES,
-                      INT_GPIOF_TM4C123, true);
+    /* switch0 = lswitch(GPIO_PORTF_BASE, BUTTONS_BOTH, */
+    /*                   &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES, */
+    /*                   INT_GPIOF_TM4C123, true); */
 
     os_threading_init();
     schedule(shell_handler, 200);
