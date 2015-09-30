@@ -20,6 +20,9 @@
 #include "hashmap.hpp"
 #include "strhash.hpp"
 
+#include "uncleos/os.h"
+#include "uncleos/schedule.h"
+
 blinker* blink;
 
 extern "C" {
@@ -92,6 +95,22 @@ struct MyKeyHash {
     }
 };
 
+void toggle_red() {
+
+    while (1) {
+        blink->toggle(PIN_RED);
+        os_surrender_context();
+    }
+}
+
+void toggle_blue() {
+
+    while (1) {
+        blink->toggle(PIN_BLUE);
+        os_surrender_context();
+    }
+}
+
 int main(void) {
 
     ctlsys::set_clock();
@@ -117,14 +136,15 @@ int main(void) {
     status |= hmap.get(3, vals[3]);
 
     char* a = (char*)malloc(5*sizeof(char));
-    blink->toggle(PIN_RED);
     a[0] = 10;
     a[1] = 'a';
     a[2] = 0xff;
 
-    while(1) {
-        blink->toggle(PIN_BLUE);
-    }
+    os_threading_init();
+    schedule(toggle_red, 200);
+    schedule(toggle_blue, 200);
+    os_launch();
+
 }
 
 
