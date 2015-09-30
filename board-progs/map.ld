@@ -28,16 +28,18 @@ SECTIONS
     .bss : AT(ADDR(.data) + SIZEOF(.data))
     {
         _bss = .;
+        __bss_start__ = .;
         *(.bss*)
         *(COMMON)
         _ebss = .;
-    } > SRAM
+        __bss_end__ = .;
+        } > SRAM
 
-    /* _heap_bottom = .; */
-    /* _heap_top = ORIGIN(SRAM) + LENGTH(SRAM) - _stack_size; */
+    . = ALIGN(8);
+    _heap_bottom = .;
+    _heap_top = ORIGIN(SRAM) + LENGTH(SRAM) - _stack_size;
 
-    /* _stack_bottom = _heap_top; */
-    _stack_bottom = .;
+    _stack_bottom = _heap_top;
     _stack_top = ORIGIN(SRAM) + LENGTH(SRAM);
 
 }
