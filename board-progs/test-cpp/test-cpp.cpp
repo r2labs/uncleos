@@ -93,23 +93,6 @@ int main(void) {
 
     blink = new blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
-    char one[] = {'o','n','e'};
-    char two[] = {'t','w','o'};
-    char three[] = {'t','h','r','e','e'};
-
-    /* hmap = new HashMap<uint32_t, uint32_t, MyKeyHash>(); */
-    /* hmap->put(SuperFastHash(one, ustrlen(one)), 2); */
-    /* hmap->put(SuperFastHash(two, ustrlen(two)), 3); */
-    /* hmap->put(SuperFastHash(three, ustrlen(three)), 4); */
-    /* hmap->put(2, 123); */
-
-    /* uint32_t vals[4]; */
-    /* bool status = 0; */
-    /* status |= hmap->get(SuperFastHash(one, ustrlen(one)), vals[0]); */
-    /* status |= hmap->get(SuperFastHash(two, ustrlen(two)), vals[1]); */
-    /* status |= hmap->get(SuperFastHash(three, ustrlen(three)), vals[2]); */
-    /* status |= hmap->get(2, vals[3]); */
-
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
