@@ -11,19 +11,68 @@
 #include "inc/hw_memmap.h"
 
 #include "driverlib/interrupt.h"
+#include "driverlib/uart.h"
 
 #include "unclelib/ctlsysctl.hpp"
 #include "unclelib/blinker.hpp"
+#include "unclelib/bufferpp.hpp"
+#include "unclelib/semaphorepp.hpp"
+#include "unclelib/shellpp.hpp"
+#include "unclelib/uartpp.hpp"
 
 #include "uncleos/nexus.h"
+#include "uncleos/os.h"
+#include "uncleos/schedule.h"
 
 #include "hashmap.hpp"
 #include "strhash.hpp"
 
-#include "uncleos/os.h"
-#include "uncleos/schedule.h"
+#define UART0_RX_BUFFER_SIZE 32
+static semaphore UART0_RX_SEM;
+static buffer<char, UART0_RX_BUFFER_SIZE> UART0_RX_BUFFER;
 
 blinker* blink;
+uart uart0;
+shell shell0;
+
+struct MyKeyHash {
+    unsigned long operator()(const int& k) const
+    {
+        return k % 10;
+    }
+};
+HashMap<uint32_t, uint32_t, MyKeyHash>* hmap;
+
+extern "C" void UART0_Handler(void) {
+
+    if(!(uart0.ack() & (UART_INT_RX | UART_INT_RT))) {
+        return;
+    }
+
+    while(UARTCharsAvail(UART0_BASE)) {
+        char recv = uart0.get_char();
+
+        /* Regardless of newline received, our convention is to
+         * mark end-of-lines in a buffer with the CR character. */
+        switch(recv) {
+        case '\n':
+            if (uart::LAST_WAS_CR) {
+                uart::LAST_WAS_CR = false;
+                continue;
+            }
+            break;
+        case '\r':
+            uart::LAST_WAS_CR = true;
+            break;
+        case 0x1b:
+            recv = '\r';
+            break;
+        default: break;
+        }
+        UART0_RX_BUFFER.notify((const int8_t) recv);
+        blink->blink(PIN_RED);
+    }
+}
 
 extern "C" {
     int _close(int file) { return -1; }
@@ -88,21 +137,6 @@ extern "C" {
     }
 }
 
-struct MyKeyHash {
-    unsigned long operator()(const int& k) const
-    {
-        return k % 10;
-    }
-};
-
-void toggle_red() {
-
-    while (1) {
-        blink->toggle(PIN_RED);
-        os_surrender_context();
-    }
-}
-
 void toggle_blue() {
 
     while (1) {
@@ -111,6 +145,13 @@ void toggle_blue() {
     }
 }
 
+void shell_handler() {
+    shell0.shell_handler();
+}
+
+int test_cmd(char* args) {
+    uart0.atomic_printf("%s", args);
+}
 int main(void) {
 
     ctlsys::set_clock();
@@ -122,29 +163,34 @@ int main(void) {
     char two[] = {'t','w','o'};
     char three[] = {'t','h','r','e','e'};
 
-    HashMap<uint32_t, uint32_t, MyKeyHash> hmap;
-    hmap.put(0, SuperFastHash(one, ustrlen(one)));
-    hmap.put(1, SuperFastHash(two, ustrlen(two)));
-    hmap.put(2, SuperFastHash(three, ustrlen(three)));
-    hmap.put(3, 2);
+    hmap = new HashMap<uint32_t, uint32_t, MyKeyHash>();
+    hmap->put(0, SuperFastHash(one, ustrlen(one)));
+    hmap->put(1, SuperFastHash(two, ustrlen(two)));
+    hmap->put(2, SuperFastHash(three, ustrlen(three)));
+    hmap->put(3, 2);
 
     uint32_t vals[4];
     bool status = 0;
-    status |= hmap.get(0, vals[0]);
-    status |= hmap.get(1, vals[1]);
-    status |= hmap.get(2, vals[2]);
-    status |= hmap.get(3, vals[3]);
+    status |= hmap->get(0, vals[0]);
+    status |= hmap->get(1, vals[1]);
+    status |= hmap->get(2, vals[2]);
+    status |= hmap->get(3, vals[3]);
 
     char* a = (char*)malloc(5*sizeof(char));
     a[0] = 10;
     a[1] = 'a';
     a[2] = 0xff;
 
+    UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
+    uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
+
+    shell0 = shell(&uart0);
+    shell0.register_command("test", test_cmd);
+
     os_threading_init();
-    schedule(toggle_red, 200);
+    schedule(shell_handler, 200);
     schedule(toggle_blue, 200);
     os_launch();
-
 }
 
 
