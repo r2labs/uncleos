@@ -5,7 +5,8 @@ set(CMAKE_CXX_FLAGS "-fno-rtti -fno-exceptions -MD -Wall -ffunction-sections -fd
 
 set (unclelib-src blinker.cpp timerpp.cpp uartpp.cpp shellpp.cpp
   semaphorepp.cpp canpp.cpp adcpp.cpp motorpp.cpp drivepp.cpp ir.cpp
-  pingpp.cpp math.cpp ctlsysctl.cpp switchpp.cpp servo.cpp)
+  pingpp.cpp math.cpp ctlsysctl.cpp switchpp.cpp servo.cpp
+  tinynew.cpp)
 
 include_directories(../)
 

@@ -1,3 +1,6 @@
+#ifndef __SUPERFASTHASH_H__
+#define __SUPERFASTHASH_H__
+
 /* http://www.azillionmonkeys.com/qed/hash.html */
 #include <stdint.h>
 #undef get16bits
@@ -15,7 +18,7 @@ uint32_t SuperFastHash (const char* data, int len) {
     uint32_t hash = len, tmp;
     int rem;
 
-    if (len <= 0 || data == NULL) return 0;
+    if (len <= 0 || data == 0) return 0;
 
     rem = len & 3;
     len >>= 2;
@@ -55,3 +58,5 @@ uint32_t SuperFastHash (const char* data, int len) {
 
     return hash;
 }
+
+#endif /* __SUPERFASTHASH_H__ */

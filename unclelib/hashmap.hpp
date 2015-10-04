@@ -1,3 +1,6 @@
+#ifndef __HASHMAP_H__
+#define __HASHMAP_H__
+
 #include "hashnode.hpp"
 #include "keyhash.hpp"
 
@@ -14,12 +17,12 @@ public:
         // destroy all buckets one by one
         for (int i = 0; i < TABLE_SIZE; ++i) {
             HashNode<K, V> *entry = table[i];
-            while (entry != NULL) {
+            while (entry != 0) {
                 HashNode<K, V> *prev = entry;
                 entry = entry->getNext();
                 delete prev;
             }
-            table[i] = NULL;
+            table[i] = 0;
         }
         // destroy the hash table
         delete [] table;
@@ -29,7 +32,7 @@ public:
         unsigned long hashValue = hashFunc(key);
         HashNode<K, V> *entry = table[hashValue];
 
-        while (entry != NULL) {
+        while (entry != 0) {
             if (entry->getKey() == key) {
                 value = entry->getValue();
                 return true;
@@ -41,17 +44,17 @@ public:
 
     void put(const K &key, const V &value) {
         unsigned long hashValue = hashFunc(key);
-        HashNode<K, V> *prev = NULL;
+        HashNode<K, V> *prev = 0;
         HashNode<K, V> *entry = table[hashValue];
 
-        while (entry != NULL && entry->getKey() != key) {
+        while (entry != 0 && entry->getKey() != key) {
             prev = entry;
             entry = entry->getNext();
         }
 
-        if (entry == NULL) {
+        if (entry == 0) {
             entry = new HashNode<K, V>(key, value);
-            if (prev == NULL) {
+            if (prev == 0) {
                 // insert as first bucket
                 table[hashValue] = entry;
             } else {
@@ -65,20 +68,20 @@ public:
 
     void remove(const K &key) {
         unsigned long hashValue = hashFunc(key);
-        HashNode<K, V> *prev = NULL;
+        HashNode<K, V> *prev = 0;
         HashNode<K, V> *entry = table[hashValue];
 
-        while (entry != NULL && entry->getKey() != key) {
+        while (entry != 0 && entry->getKey() != key) {
             prev = entry;
             entry = entry->getNext();
         }
 
-        if (entry == NULL) {
+        if (entry == 0) {
             // key not found
             return;
         }
         else {
-            if (prev == NULL) {
+            if (prev == 0) {
                 // remove first bucket of the list
                 table[hashValue] = entry->getNext();
             } else {
@@ -93,3 +96,5 @@ private:
     HashNode<K, V> **table;
     F hashFunc;
 };
+
+#endif /* __HASHMAP_H__ */

@@ -3,7 +3,7 @@ template <typename K, typename V>
 class HashNode {
 public:
     HashNode(const K &key, const V &value) :
-        key(key), value(value), next(NULL) {
+        key(key), value(value), next(0) {
     }
 
     K getKey() const {

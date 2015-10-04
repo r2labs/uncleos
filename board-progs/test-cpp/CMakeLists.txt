@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.7)
 
 project(test-cpp)
-set(test-cpp-srcs ../startup_gcc_canonical.c tinynew.cpp test-cpp.cpp)
+set(test-cpp-srcs ../startup_gcc_canonical.c test-cpp.cpp)
 
 include_directories(../../)
 
