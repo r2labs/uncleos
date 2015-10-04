@@ -15,6 +15,7 @@
 
 #include "uncleos/os.h"
 #include "uncleos/schedule.h"
+#include "uncleos/syscalls.h"
 
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
@@ -121,7 +122,7 @@ void shell_handler() {
     shell0.shell_handler();
 }
 
-int test_cmd(char* args) {
+int8_t test_cmd(char* args) {
     uart0.atomic_printf("%s", args);
 }
 
