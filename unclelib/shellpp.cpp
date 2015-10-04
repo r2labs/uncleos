@@ -1,5 +1,6 @@
 #include "shellpp.hpp"
 #include "blinker.hpp"
+#include "strhash.hpp"
 #include "uncleos/utlist.h"
 #include "uncleos/nexus.c"
 
@@ -13,24 +14,13 @@
 
 #define SHELL_VERBOSE
 
-#define shell_command_is(a)                     \
-    0 == ustrncmp(a, (const char*) buf.buf, buf.length())
-
-semaphore* shell::m_start;
-semaphore* shell::m_stop;
-
 void shell::init() {
 
     buf = buffer<char, SHELL_BUFFER_LENGTH>();
     init_ps1();
 
     /* initialize the system commands */
-    unregistered_commands = 0;
-    registered_commands = 0;
-    system_iterator i;
-    for (i=0; i<SYSTEM_MAX_COMMANDS; ++i) {
-        CDL_PREPEND(unregistered_commands, &SYSTEM_COMMANDS[i]);
-    }
+    commands = new HashMap<uint32_t, sys_cmd, MyKeyHash>();
 }
 
 shell::shell() {
@@ -41,16 +31,6 @@ shell::shell() {
 shell::shell(uart* u) {
 
     uart0 = u;
-    init();
-}
-
-shell::shell(uart* u, semaphore* m_start, semaphore* m_stop) {
-
-    uart0 = u;
-
-    m_start = m_start;
-    m_stop = m_stop;
-
     init();
 }
 
@@ -106,47 +86,21 @@ void shell::backspace() {
     }
 }
 
-void shell::register_command(char* command_name, int(*command)(char* args)) {
-    /* Grab the first free command, move it from the unregisted to the
-     * registered pile, and populate it with this function's
-     * arguments */
-    system_command* sys_command = unregistered_commands;
-    CDL_DELETE(unregistered_commands, sys_command);
-    CDL_PREPEND(registered_commands, sys_command);
-
-    sys_command->valid = true;
-    umemset(sys_command->name, 0, SYSTEM_MAX_COMMANDS);
-    _ustrcpy(sys_command->name, command_name);
-    sys_command->command = command;
+void shell::register_command(char* command_name, sys_cmd command) {
+    uint32_t command_hash = SuperFastHash(command_name, ustrlen(command_name));
+    commands->put(command_hash, command);
 }
 
 void shell::deregister_command(char* command_name) {
-
-    /* Grab the structure of the command to deregister and invaldiate
-     * the metadata. Move it from the registered to the unregistered
-     * pile. */
-    system_command* command = command_from_name(command_name);
-    command->valid = false;
-    CDL_DELETE(registered_commands, command);
-    CDL_PREPEND(unregistered_commands, command);
+    uint32_t command_hash = SuperFastHash(command_name, ustrlen(command_name));
+    commands->remove(command_hash);
 }
 
-system_command* shell::command_from_name(const char* command_name) {
-
-    system_iterator i=0;
-    system_command *ret;
-    while(i<SYSTEM_MAX_COMMANDS &&
-          0 != ustrcmp(SYSTEM_COMMANDS[i].name, command_name)) {
-        ++i;
-    }
-
-    /* Graceful exit on invalid command entry */
-    if (i >= SYSTEM_MAX_COMMANDS) {
-        ret = 0;
-    } else {
-        ret = &SYSTEM_COMMANDS[i];
-    }
-    return ret;
+sys_cmd shell::command_from_name(const char* command_name) {
+    uint32_t command_hash = SuperFastHash(command_name, ustrlen(command_name));
+    sys_cmd command;
+    bool status = commands->get(command_hash, command);
+    return status ? command : 0;
 }
 
 exit_status_t shell::execute_command() {
@@ -164,9 +118,9 @@ exit_status_t shell::execute_command() {
 
     char* args = &buf.buf[idx+1];
 
-    system_command* sys_command = command_from_name(buf.buf);
+    sys_cmd command = command_from_name(buf.buf);
 
-    exit_status_t exit_code = sys_command ? sys_command->command(args) : 1;
+    exit_status_t exit_code =  command ? command(args) : 1;
 
 #ifdef SHELL_VERBOSE
     if (exit_code != EXIT_SUCCESS) {

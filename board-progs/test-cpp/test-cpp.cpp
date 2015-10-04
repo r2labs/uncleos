@@ -24,24 +24,22 @@
 #include "uncleos/os.h"
 #include "uncleos/schedule.h"
 
-#include "hashmap.hpp"
-#include "strhash.hpp"
+#include "unclelib/hashmap.hpp"
 
 #define UART0_RX_BUFFER_SIZE 32
 static semaphore UART0_RX_SEM;
 static buffer<char, UART0_RX_BUFFER_SIZE> UART0_RX_BUFFER;
-
-blinker* blink;
-uart uart0;
-shell shell0;
-
 struct MyKeyHash {
-    unsigned long operator()(const int& k) const
+    unsigned long operator()(const uint32_t& k) const
     {
         return k % 10;
     }
 };
 HashMap<uint32_t, uint32_t, MyKeyHash>* hmap;
+
+blinker* blink;
+uart uart0;
+shell shell0;
 
 extern "C" void UART0_Handler(void) {
 
@@ -149,7 +147,7 @@ void shell_handler() {
     shell0.shell_handler();
 }
 
-int test_cmd(char* args) {
+int8_t test_cmd(char* args) {
     uart0.atomic_printf("%s", args);
 }
 int main(void) {
@@ -163,23 +161,18 @@ int main(void) {
     char two[] = {'t','w','o'};
     char three[] = {'t','h','r','e','e'};
 
-    hmap = new HashMap<uint32_t, uint32_t, MyKeyHash>();
-    hmap->put(0, SuperFastHash(one, ustrlen(one)));
-    hmap->put(1, SuperFastHash(two, ustrlen(two)));
-    hmap->put(2, SuperFastHash(three, ustrlen(three)));
-    hmap->put(3, 2);
+    /* hmap = new HashMap<uint32_t, uint32_t, MyKeyHash>(); */
+    /* hmap->put(SuperFastHash(one, ustrlen(one)), 2); */
+    /* hmap->put(SuperFastHash(two, ustrlen(two)), 3); */
+    /* hmap->put(SuperFastHash(three, ustrlen(three)), 4); */
+    /* hmap->put(2, 123); */
 
-    uint32_t vals[4];
-    bool status = 0;
-    status |= hmap->get(0, vals[0]);
-    status |= hmap->get(1, vals[1]);
-    status |= hmap->get(2, vals[2]);
-    status |= hmap->get(3, vals[3]);
-
-    char* a = (char*)malloc(5*sizeof(char));
-    a[0] = 10;
-    a[1] = 'a';
-    a[2] = 0xff;
+    /* uint32_t vals[4]; */
+    /* bool status = 0; */
+    /* status |= hmap->get(SuperFastHash(one, ustrlen(one)), vals[0]); */
+    /* status |= hmap->get(SuperFastHash(two, ustrlen(two)), vals[1]); */
+    /* status |= hmap->get(SuperFastHash(three, ustrlen(three)), vals[2]); */
+    /* status |= hmap->get(2, vals[3]); */
 
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
