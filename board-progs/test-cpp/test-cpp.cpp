@@ -90,19 +90,23 @@ int8_t test_cmd(char* args) {
 int8_t query_joint_pulse_width(char* args) {
     uint8_t jointnum = args[0]-'0';
     uart0.atomic_printf("1000\n");
+
+    return 0;
 }
 
 int8_t set_joint_pulse_width(char* args) {
     uint8_t jointnum = args[0]-'0';
     uint32_t pw = args[3]*1000 + args[4]*100 + args[5]*10 + args[6];
 
-    if(jointnum == 1) {
+    if (jointnum == 1) {
         blink->toggle(PIN_RED);
     } else if (jointnum == 2) {
         blink->toggle(PIN_BLUE);
     } else if (jointnum == 3) {
         blink->toggle(PIN_GREEN);
     }
+
+    return 0;
 }
 
 int main(void) {
