@@ -118,6 +118,7 @@ int main(void) {
     shell0 = shell(&uart0);
     shell0.register_command("test", test_cmd);
     shell0.register_command("QP", query_joint_pulse_width);
+    shell0.register_command("J", set_joint_pulse_width);
 
     os_threading_init();
     schedule(shell_handler, 200);
