@@ -67,14 +67,12 @@ extern "C" void UART0_Handler(void) {
         default: break;
         }
         UART0_RX_BUFFER.notify((const int8_t) recv);
-        blink->blink(PIN_RED);
     }
 }
 
 void toggle_blue() {
 
     while (1) {
-        blink->toggle(PIN_BLUE);
         os_surrender_context();
     }
 }
