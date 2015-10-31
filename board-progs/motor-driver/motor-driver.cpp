@@ -12,7 +12,7 @@
 #include "driverlib/uart.h"
 
 #include "unclelib/ctlsysctl.hpp"
-#include "unclelib/blinker.hpp"
+#include "unclelib/servo.hpp"
 #include "unclelib/bufferpp.hpp"
 #include "unclelib/semaphorepp.hpp"
 #include "unclelib/shellpp.hpp"
@@ -36,7 +36,7 @@ struct MyKeyHash {
 };
 HashMap<uint32_t, uint32_t, MyKeyHash>* hmap;
 
-blinker* blink;
+servo servos[5];
 uart uart0;
 shell shell0;
 
@@ -70,45 +70,22 @@ extern "C" void UART0_Handler(void) {
     }
 }
 
-void toggle_blue() {
-
-    while (1) {
-        os_surrender_context();
-    }
-}
-
 void shell_handler() {
     shell0.shell_handler();
 }
 
-int8_t set_this_joint(char* args) {
-        // resume: extract the below information from the args
-    /* unknown_type joint, unknown_type pulse_width */
-    this_joint.set(pulse_width);
+int8_t set_joint_pulse_width(char* args) {
+  // resume: extract the below information from the args
+  uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+  uint32_t pw = args[4]*1000 + args[5]*100 + args[6]*10 + args[7];
+  servo[jointnum].set(pw);
+  return 0;
 }
 
 int8_t query_joint_pulse_width(char* args) {
-    uint8_t jointnum = args[0]-'0';
-    uart0.atomic_printf("1000\n");
-
-    return 0;
-}
-
-int8_t set_joint_pulse_width(char* args) {
-    uint8_t jointnum = args[0]-'0';
-    uint32_t pw = args[3]*1000 + args[4]*100 + args[5]*10 + args[6];
-
-    switch(jointnum) {
-    case 1:
-            blink->toggle(PIN_RED);
-            break;
-    case 2: 
-            blink->toggle(PIN_BLUE);
-            break;
-    case 3: 
-            blink->toggle(PIN_GREEN);
-            break;
-    }
+    uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+    num = servo[jointnum].get();
+    uart0.atomic_printf("%d\n", num);
     return 0;
 }
 
@@ -116,8 +93,6 @@ int main(void) {
 
     ctlsys::set_clock();
     IntMasterDisable();
-
-    blink = new blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
