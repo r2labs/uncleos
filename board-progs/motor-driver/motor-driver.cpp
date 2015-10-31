@@ -78,13 +78,13 @@ int8_t set_joint_pulse_width(char* args) {
   // resume: extract the below information from the args
   uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
   uint32_t pw = args[4]*1000 + args[5]*100 + args[6]*10 + args[7];
-  servo[jointnum].set(pw);
+  servos[jointnum].set(pw);
   return 0;
 }
 
 int8_t query_joint_pulse_width(char* args) {
     uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
-    num = servo[jointnum].get();
+    uint32_t num = servos[jointnum].get();
     uart0.atomic_printf("%d\n", num);
     return 0;
 }
@@ -99,13 +99,11 @@ int main(void) {
 
     shell0 = shell(&uart0);
     // resume: make this match the defuns
-    shell0.register_command("test", test_cmd);
     shell0.register_command("QP", query_joint_pulse_width);
     shell0.register_command("J", set_joint_pulse_width);
 
     os_threading_init();
     schedule(shell_handler, 200);
-    schedule(toggle_blue, 200);
     os_launch();
 }
 
