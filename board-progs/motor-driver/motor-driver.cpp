@@ -10,6 +10,7 @@
 
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
+#include "driverlib/pwm.h"
 
 #include "unclelib/ctlsysctl.hpp"
 #include "unclelib/servo.hpp"
@@ -75,9 +76,15 @@ void shell_handler() {
 }
 
 int8_t set_joint_pulse_width(char* args) {
-  // resume: extract the below information from the args
   uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
   uint32_t pw = args[4]*1000 + args[5]*100 + args[6]*10 + args[7];
+  servos[jointnum].set(pw);
+  return 0;
+}
+
+int8_t set_joint_discrete(char* args) {
+  uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+  uint32_t pw = args[3] == 'H' ? servos[jointnum].max_duty : servos[jointnum].min_duty;
   servos[jointnum].set(pw);
   return 0;
 }
@@ -97,10 +104,16 @@ int main(void) {
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
+    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 1200, 5000, 3000);
+    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 1200, 4800, 3000);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 1400, 4200, 3800);
+    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 1200, 5000, 3000);
+    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 2000, 5000, 2000);
+
     shell0 = shell(&uart0);
-    // resume: make this match the defuns
     shell0.register_command("QP", query_joint_pulse_width);
     shell0.register_command("J", set_joint_pulse_width);
+    shell0.register_command("D", set_joint_discrete);
 
     os_threading_init();
     schedule(shell_handler, 200);
