@@ -104,11 +104,11 @@ int main(void) {
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
-    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 1200, 5000, 3000);
-    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 1200, 4800, 3000);
-    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 1400, 4200, 3800);
-    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 1200, 5000, 3000);
-    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 2000, 5000, 2000);
+    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500);
+    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1500);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 700, 2100, 1900);
+    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 600, 2500, 1500);
+    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000);
 
     for (int8_t i=0; i<5; ++i) {
       servos[i].start();
