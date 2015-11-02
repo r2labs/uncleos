@@ -77,7 +77,7 @@ void shell_handler() {
 
 int8_t set_joint_pulse_width(char* args) {
   uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
-  uint32_t pw = args[4]*1000 + args[5]*100 + args[6]*10 + args[7];
+  uint32_t pw = args[3]*1000 + args[4]*100 + args[5]*10 + args[6];
   servos[jointnum].set(pw);
   return 0;
 }
