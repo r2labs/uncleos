@@ -110,6 +110,10 @@ int main(void) {
     servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 1200, 5000, 3000);
     servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 2000, 5000, 2000);
 
+    for (int8_t i=0; i<5; ++i) {
+      servos[i].start();
+    }
+
     shell0 = shell(&uart0);
     shell0.register_command("QP", query_joint_pulse_width);
     shell0.register_command("J", set_joint_pulse_width);
