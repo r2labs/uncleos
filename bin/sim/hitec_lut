@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Written by Eric Crosson....lol
+# 2015-11-10
+
+grep "$@" ./lut.out
