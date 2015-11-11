@@ -1,21 +1,21 @@
 ---
 gripper:
   min: 1000
-  max: 2500
+  max: 2400
   rest: 1000
 wrist:
   min: 600
-  max: 2500
+  max: 2400
   rest: 1500
 elbow:
   min: 700
   max: 2100
-  rest: 1800
-shoulder:
-  min: 600
-  max: 2400
   rest: 1900
+shoulder:
+  min: 700
+  max: 2300
+  rest: 2000
 base:
   min: 600
-  max: 2500
+  max: 2400
   rest: 1500
