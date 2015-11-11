@@ -24,6 +24,8 @@ private:
 
     bool enabled;
 
+    int32_t clock_div;
+
 public:
     uint32_t min_duty, max_duty, rest_duty;
 
@@ -40,7 +42,7 @@ public:
     void start(void);
 
     /*! Set the motor speed. */
-    uint32_t set(uint32_t pwm_clocks);
+    uint32_t set(uint32_t pw);
 
     uint32_t get(void);
 

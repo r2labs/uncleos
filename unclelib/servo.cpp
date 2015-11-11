@@ -30,10 +30,10 @@ servo::servo(memory_address_t pwm_base, memory_address_t pwm_gen,
     pwm_init();
 }
 
-uint32_t servo::set(uint32_t pwm_clocks) {
-    pwm_clocks = clamp(pwm_clocks, min_duty, max_duty);
-    PWMPulseWidthSet(pwm_base, pwm_out, pwm_clocks);
-    current_duty = pwm_clocks;
+uint32_t servo::set(uint32_t pw) {
+    pw = clamp(pw, min_duty, max_duty);
+    current_duty = pw;
+    PWMPulseWidthSet(pwm_base, pwm_out, pw*clock_div);
     return current_duty;
 }
 
@@ -50,6 +50,9 @@ void servo::pwm_init() {
     uint32_t status = StartCritical();
 
     SysCtlPWMClockSet(SYSCTL_PWMDIV_8);
+    /* clock_div is directly related to SYSCTL_PWMDIV_8 */
+    clock_div = 2;
+
     PWMGenConfigure(pwm_base, pwm_gen, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
     PWMGenPeriodSet(pwm_base, pwm_gen, pwm_max_period);
     PWMGenEnable(pwm_base, pwm_gen);

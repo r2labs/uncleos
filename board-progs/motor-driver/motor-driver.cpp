@@ -10,9 +10,10 @@
 
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
+#include "driverlib/pwm.h"
 
 #include "unclelib/ctlsysctl.hpp"
-#include "unclelib/blinker.hpp"
+#include "unclelib/servo.hpp"
 #include "unclelib/bufferpp.hpp"
 #include "unclelib/semaphorepp.hpp"
 #include "unclelib/shellpp.hpp"
@@ -36,7 +37,7 @@ struct MyKeyHash {
 };
 HashMap<uint32_t, uint32_t, MyKeyHash>* hmap;
 
-blinker* blink;
+servo servos[5];
 uart uart0;
 shell shell0;
 
@@ -70,45 +71,28 @@ extern "C" void UART0_Handler(void) {
     }
 }
 
-void toggle_blue() {
-
-    while (1) {
-        os_surrender_context();
-    }
-}
-
 void shell_handler() {
     shell0.shell_handler();
 }
 
-int8_t set_this_joint(char* args) {
-        // resume: extract the below information from the args
-    /* unknown_type joint, unknown_type pulse_width */
-    this_joint.set(pulse_width);
-}
-
-int8_t query_joint_pulse_width(char* args) {
-    uint8_t jointnum = args[0]-'0';
-    uart0.atomic_printf("1000\n");
-
+int8_t set_joint_pulse_width(char* args) {
+    uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+    uint32_t pw = (args[3]-'0')*1000 + (args[4]-'0')*100 + (args[5]-'0')*10 + (args[6]-'0');
+    servos[jointnum].set(pw);
     return 0;
 }
 
-int8_t set_joint_pulse_width(char* args) {
-    uint8_t jointnum = args[0]-'0';
-    uint32_t pw = args[3]*1000 + args[4]*100 + args[5]*10 + args[6];
+int8_t set_joint_discrete(char* args) {
+  uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+  uint32_t pw = args[3] == 'H' ? servos[jointnum].max_duty : servos[jointnum].min_duty;
+  servos[jointnum].set(pw);
+  return 0;
+}
 
-    switch(jointnum) {
-    case 1:
-            blink->toggle(PIN_RED);
-            break;
-    case 2: 
-            blink->toggle(PIN_BLUE);
-            break;
-    case 3: 
-            blink->toggle(PIN_GREEN);
-            break;
-    }
+int8_t query_joint_pulse_width(char* args) {
+    uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+    uint32_t num = servos[jointnum].get();
+    uart0.atomic_printf("%d\n", num);
     return 0;
 }
 
@@ -117,20 +101,26 @@ int main(void) {
     ctlsys::set_clock();
     IntMasterDisable();
 
-    blink = new blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
-
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
+    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500);
+    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1500);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 700, 2100, 1900);
+    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 600, 2500, 1500);
+    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000);
+
+    for (int8_t i=0; i<5; ++i) {
+      servos[i].start();
+    }
+
     shell0 = shell(&uart0);
-    // resume: make this match the defuns
-    shell0.register_command("test", test_cmd);
     shell0.register_command("QP", query_joint_pulse_width);
     shell0.register_command("J", set_joint_pulse_width);
+    shell0.register_command("D", set_joint_discrete);
 
     os_threading_init();
     schedule(shell_handler, 200);
-    schedule(toggle_blue, 200);
     os_launch();
 }
 
