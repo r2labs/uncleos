@@ -44,6 +44,7 @@ uart uart0;
 shell shell0;
 lswitch switch0;
 semaphore sem_switch;
+uint8_t jointnum = 1;
 
 extern "C" void UART0_Handler(void) {
 
@@ -87,10 +88,10 @@ int8_t set_joint_pulse_width(char* args) {
 }
 
 int8_t set_joint_discrete(char* args) {
-  uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
-  uint32_t pw = args[3] == 'H' ? servos[jointnum].max_duty : servos[jointnum].min_duty;
-  servos[jointnum].set(pw);
-  return 0;
+    uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+    uint32_t pw = args[3] == 'H' ? servos[jointnum].max_duty : servos[jointnum].min_duty;
+    servos[jointnum].set(pw);
+    return 0;
 }
 
 int8_t query_joint_pulse_width(char* args) {
@@ -100,13 +101,32 @@ int8_t query_joint_pulse_width(char* args) {
     return 0;
 }
 
+int8_t set_joint_twiddler(char* args) {
+    jointnum = args[0]-'0';
+    return 0;
+}
+
+uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
+              uint32_t y_min, uint32_t y_max) {
+
+    if (x > x_max) { return y_max; }
+    else if (x < x_min) { return y_min; }
+    return y_min + (y_min - y_max)*((x - x_min)/(x_max - x_min));
+}
+
+int8_t set_estimated_angle(char* args) {
+    uint8_t jointnum = args[0]-'0';
+
+    uint32_t angle = (args[2]-'0')*10 + (args[3]-'0');
+    servos[jointnum].set(lerp(angle, 0, 180, 600, 2400));
+}
+
 extern "C" void GPIOPortF_Handler() {
-  switch0.ack();
-  switch0.debounce();
+    switch0.ack();
+    switch0.debounce();
 }
 
 extern "C" void Timer1A_Handler() {
-
     switch0.end_debounce();
 }
 
@@ -114,10 +134,13 @@ void switch_responder() {
     while(1) {
         if(sem_switch.guard() && switch0.debounced_data) {
             if(switch0.debounced_data == BUTTON_LEFT) {
-              blink.toggle(PIN_RED);
+                blink.blink(PIN_RED);
+                servos[jointnum].set(servos[jointnum].get() + 1);
             } else if(switch0.debounced_data == BUTTON_RIGHT) {
-              blink.toggle(PIN_BLUE);
+                servos[jointnum].set(servos[jointnum].get() - 1);
+                blink.blink(PIN_BLUE);
             }
+            uart0.atomic_printf("%d\n", servos[jointnum].get());
         }
         os_surrender_context();
     }
@@ -138,13 +161,15 @@ int main(void) {
     servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000);
 
     for (int8_t i=0; i<5; ++i) {
-      servos[i].start();
+        servos[i].start();
     }
 
     shell0 = shell(&uart0);
     shell0.register_command("QP", query_joint_pulse_width);
     shell0.register_command("J", set_joint_pulse_width);
     shell0.register_command("D", set_joint_discrete);
+    shell0.register_command("T", set_joint_twiddler);
+    shell0.register_command("E", set_estimated_angle);
 
     blink = blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
