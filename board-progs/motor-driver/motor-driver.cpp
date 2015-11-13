@@ -135,9 +135,9 @@ void switch_responder() {
         if(sem_switch.guard() && switch0.debounced_data) {
             if(switch0.debounced_data == BUTTON_LEFT) {
                 blink.blink(PIN_RED);
-                servos[jointnum].set(servos[jointnum].get() + 1);
+                servos[jointnum].force(servos[jointnum].get() + 1);
             } else if(switch0.debounced_data == BUTTON_RIGHT) {
-                servos[jointnum].set(servos[jointnum].get() - 1);
+                servos[jointnum].force(servos[jointnum].get() - 1);
                 blink.blink(PIN_BLUE);
             }
             uart0.atomic_printf("%d\n", servos[jointnum].get());
