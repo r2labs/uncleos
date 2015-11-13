@@ -105,8 +105,8 @@ int main(void) {
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
     servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500);
-    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1500);
-    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 700, 2100, 1900);
+    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1945);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 700, 2100, 1860);
     servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 600, 2500, 1500);
     servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000);
 
