@@ -32,8 +32,7 @@
 static semaphore UART0_RX_SEM;
 static buffer<char, UART0_RX_BUFFER_SIZE> UART0_RX_BUFFER;
 struct MyKeyHash {
-    unsigned long operator()(const uint32_t& k) const
-    {
+    unsigned long operator()(const uint32_t& k) const {
         return k % 10;
     }
 };
