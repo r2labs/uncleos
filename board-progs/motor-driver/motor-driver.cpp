@@ -101,6 +101,12 @@ int8_t query_joint_pulse_width(char* args) {
     return 0;
 }
 
+int8_t query_all_joints(char* args) {
+    for (uint8_t i=0; i<5; ++i) {
+        uart0.atomic_printf("%d: %d\n", i, servos[i].get());
+    }
+}
+
 int8_t set_joint_twiddler(char* args) {
     jointnum = args[0]-'0';
     return 0;
@@ -111,6 +117,13 @@ uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
     if (x > x_max) { return y_max; }
     else if (x < x_min) { return y_min; }
     return y_min + ((y_max - y_min)*(x - x_min))/(x_max - x_min);
+}
+
+int8_t goto_rest(char* args) {
+    for (uint8_t i=0; i<5; ++i) {
+        servos[i].set(servos[i].rest_duty);
+    }
+    return 0;
 }
 
 int8_t set_estimated_angle(char* args) {
@@ -169,6 +182,8 @@ int main(void) {
     shell0.register_command("D", set_joint_discrete);
     shell0.register_command("T", set_joint_twiddler);
     shell0.register_command("E", set_estimated_angle);
+    shell0.register_command("A", query_all_joints);
+    shell0.register_command("R", goto_rest);
 
     blink = blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
