@@ -128,9 +128,13 @@ int8_t goto_rest(char* args) {
 
 int8_t set_estimated_angle(char* args) {
     uint8_t jointnum = args[0]-'0';
-
-    uint32_t angle = (args[2]-'0')*10 + (args[3]-'0');
-    servos[jointnum].set(lerp(angle, 0, 180, 600, 2400));
+    int32_t angle = (args[2]-'0')*100 + (args[3]-'0')*10 + (args[4]-'0');
+    uint32_t computed_pw = lerp(angle, 0, 180,
+                                servos[jointnum].min_duty,
+                                servos[jointnum].max_duty);
+    servos[jointnum].set(computed_pw);
+    uart0.atomic_printf("%d, %d\n", angle, servos[jointnum].get());
+    return 0;
 }
 
 extern "C" void GPIOPortF_Handler() {
