@@ -12,11 +12,13 @@
 #include "driverlib/uart.h"
 #include "driverlib/pwm.h"
 
+#include "unclelib/blinker.hpp"
 #include "unclelib/ctlsysctl.hpp"
 #include "unclelib/servo.hpp"
 #include "unclelib/bufferpp.hpp"
 #include "unclelib/semaphorepp.hpp"
 #include "unclelib/shellpp.hpp"
+#include "unclelib/switchpp.hpp"
 #include "unclelib/uartpp.hpp"
 
 #include "uncleos/nexus.h"
@@ -37,9 +39,12 @@ struct MyKeyHash {
 };
 HashMap<uint32_t, uint32_t, MyKeyHash>* hmap;
 
+blinker blink;
 servo servos[5];
 uart uart0;
 shell shell0;
+lswitch switch0;
+semaphore sem_switch;
 
 extern "C" void UART0_Handler(void) {
 
@@ -96,6 +101,29 @@ int8_t query_joint_pulse_width(char* args) {
     return 0;
 }
 
+extern "C" void GPIOPortF_Handler() {
+  switch0.ack();
+  switch0.debounce();
+}
+
+extern "C" void Timer1A_Handler() {
+
+    switch0.end_debounce();
+}
+
+void switch_responder() {
+    while(1) {
+        if(sem_switch.guard() && switch0.debounced_data) {
+            if(switch0.debounced_data == BUTTON_LEFT) {
+              blink.toggle(PIN_RED);
+            } else if(switch0.debounced_data == BUTTON_RIGHT) {
+              blink.toggle(PIN_BLUE);
+            }
+        }
+        os_surrender_context();
+    }
+}
+
 int main(void) {
 
     ctlsys::set_clock();
@@ -119,8 +147,15 @@ int main(void) {
     shell0.register_command("J", set_joint_pulse_width);
     shell0.register_command("D", set_joint_discrete);
 
+    blink = blinker(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
+
+    switch0 = lswitch(GPIO_PORTF_BASE, BUTTONS_BOTH,
+                      &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES,
+                      INT_GPIOF_TM4C123, true);
+
     os_threading_init();
     schedule(shell_handler, 200);
+    schedule(switch_responder, 200);
     os_launch();
 }
 
