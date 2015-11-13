@@ -108,10 +108,9 @@ int8_t set_joint_twiddler(char* args) {
 
 uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
               uint32_t y_min, uint32_t y_max) {
-
     if (x > x_max) { return y_max; }
     else if (x < x_min) { return y_min; }
-    return y_min + (y_min - y_max)*((x - x_min)/(x_max - x_min));
+    return y_min + ((y_max - y_min)*(x - x_min))/(x_max - x_min);
 }
 
 int8_t set_estimated_angle(char* args) {
