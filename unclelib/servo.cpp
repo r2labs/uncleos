@@ -30,6 +30,12 @@ servo::servo(memory_address_t pwm_base, memory_address_t pwm_gen,
     pwm_init();
 }
 
+uint32_t servo::force(uint32_t pw) {
+    current_duty = pw;
+    PWMPulseWidthSet(pwm_base, pwm_out, pw*clock_div);
+    return current_duty;
+}
+
 uint32_t servo::set(uint32_t pw) {
     pw = clamp(pw, min_duty, max_duty);
     current_duty = pw;

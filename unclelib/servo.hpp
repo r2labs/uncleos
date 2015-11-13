@@ -41,6 +41,9 @@ public:
     /*! Enable power to the motor. */
     void start(void);
 
+    /*! Force the motor speed. */
+    uint32_t force(uint32_t pw);
+
     /*! Set the motor speed. */
     uint32_t set(uint32_t pw);
 
