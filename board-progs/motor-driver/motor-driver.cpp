@@ -46,6 +46,13 @@ lswitch switch0;
 semaphore sem_switch;
 uint8_t jointnum = 1;
 
+uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
+              uint32_t y_min, uint32_t y_max) {
+    if (x > x_max) { return y_max; }
+    else if (x < x_min) { return y_min; }
+    return y_min + ((y_max - y_min)*(x - x_min))/(x_max - x_min);
+}
+
 extern "C" void UART0_Handler(void) {
 
     if(!(uart0.ack() & (UART_INT_RX | UART_INT_RT))) {
@@ -103,20 +110,28 @@ int8_t query_joint_pulse_width(char* args) {
 
 int8_t query_all_joints(char* args) {
     for (uint8_t i=0; i<5; ++i) {
-        uart0.atomic_printf("%d: %d\n", i, servos[i].get());
+        if (jointnum == i) {
+            uart0.atomic_printf("* %d: %d us, %d deg\n", i, servos[i].get(),
+                                lerp(servos[i].get(),
+                                     servos[i].min_duty,
+                                     servos[i].max_duty, 0, 180));
+        } else {
+            uart0.atomic_printf("  %d: %d us, %d deg\n", i, servos[i].get(),
+                                lerp(servos[i].get(),
+                                     servos[i].min_duty,
+                                     servos[i].max_duty, 0, 180));
+        }
     }
-}
-
-int8_t set_joint_twiddler(char* args) {
-    jointnum = args[0]-'0';
     return 0;
 }
 
-uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
-              uint32_t y_min, uint32_t y_max) {
-    if (x > x_max) { return y_max; }
-    else if (x < x_min) { return y_min; }
-    return y_min + ((y_max - y_min)*(x - x_min))/(x_max - x_min);
+int8_t set_joint_twiddler(char* args) {
+    int num = args[0]-'0';
+    if (num >= 5) {
+        return 1;
+    }
+    jointnum = num;
+    return 0;
 }
 
 int8_t goto_rest(char* args) {
@@ -156,7 +171,10 @@ void switch_responder() {
                 servos[jointnum].force(servos[jointnum].get() - 1);
                 blink.blink(PIN_BLUE);
             }
-            uart0.atomic_printf("%d\n", servos[jointnum].get());
+            uart0.atomic_printf("%d: %d us, %d deg\n", jointnum, servos[jointnum].get(),
+                                lerp(servos[jointnum].get(),
+                                     servos[jointnum].min_duty,
+                                     servos[jointnum].max_duty, 0, 180));
         }
         os_surrender_context();
     }
