@@ -36,7 +36,7 @@ public:
 
     servo(memory_address_t pwm_base, memory_address_t pwm_gen,
           memory_address_t pwm_out, uint32_t min,
-          uint32_t max, uint32_t rest);
+          uint32_t max, uint32_t rest, uint32_t ms_smooth);
 
     /*! Cut all power to the motor. */
     void stop(void);
@@ -45,7 +45,7 @@ public:
     void start(void);
 
     /*! Set a smooth pulse width to transition to */
-    void set_smooth(uint32_t pw, uint32_t ms);
+    void set_smooth(uint32_t pw);
 
     /*! Step the motor a smoothed amount. */
     void step(void);

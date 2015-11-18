@@ -16,7 +16,7 @@ servo::servo() {}
 
 servo::servo(memory_address_t pwm_base, memory_address_t pwm_gen,
              memory_address_t pwm_out, uint32_t min, uint32_t max,
-             uint32_t rest) {
+             uint32_t rest, uint32_t ms_smooth) {
     this->pwm_base = pwm_base;
     this->pwm_gen = pwm_gen;
     this->pwm_out = pwm_out;
@@ -25,19 +25,23 @@ servo::servo(memory_address_t pwm_base, memory_address_t pwm_gen,
     this->max_duty = max;
     this->rest_duty = rest;
 
+    this->ms_smooth = ms_smooth;
+
     ctlsys::enable_periph(pwm_base);
 
     pwm_init();
 }
 
 uint32_t servo::force(uint32_t pw) {
-    return set(pw, true);
+    pw = set(pw, true);
+    start_duty = pw;
+    end_duty = pw;
+    return pw;
 }
 
-void servo::set_smooth(uint32_t pw, uint32_t ms) {
+void servo::set_smooth(uint32_t pw) {
     if (pw != end_duty) {
         start_duty = current_duty;
-        ms_smooth = ms;
         ms_counter = 0;
     }
 
@@ -45,10 +49,11 @@ void servo::set_smooth(uint32_t pw, uint32_t ms) {
 }
 
 void servo::step() {
-    if (ms_counter < ms_smooth) {
-        set(lerp(ms_counter, 0, ms_smooth, start_duty, end_duty));
+
+    if (ms_counter < ms_smooth && (current_duty != end_duty)) {
+        set(lerp(ms_counter, 0, ms_smooth, (int32_t)start_duty, (int32_t)end_duty));
+        ++ms_counter;
     }
-    ++ms_counter;
 }
 
 uint32_t servo::set(uint32_t pw, bool force) {
@@ -60,7 +65,7 @@ uint32_t servo::set(uint32_t pw, bool force) {
 
 void servo::start() {
     PWMGenEnable(pwm_base, pwm_gen);
-    set(rest_duty);
+    force(rest_duty);
 }
 
 void servo::stop() {

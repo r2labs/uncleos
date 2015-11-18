@@ -93,7 +93,7 @@ void shell_handler() {
 int8_t set_joint_smooth_pulse_width(char* args) {
     uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
     uint32_t pw = (args[3]-'0')*1000 + (args[4]-'0')*100 + (args[5]-'0')*10 + (args[6]-'0');
-    servos[jointnum].set_smooth(pw, 50);
+    servos[jointnum].set_smooth(pw);
     return 0;
 }
 
@@ -205,11 +205,11 @@ int main(void) {
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
-    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500);
-    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1945);
-    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 500, 2100, 1860);
-    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 500, 2550, 1500);
-    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000);
+    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500, 150);
+    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1945, 150);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 500, 2100, 1860, 150);
+    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 500, 2550, 1500, 150);
+    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000, 150);
 
     for (int8_t i=0; i<5; ++i) {
         servos[i].start();
