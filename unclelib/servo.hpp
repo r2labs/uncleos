@@ -44,6 +44,9 @@ public:
     /*! Enable power to the motor. */
     void start(void);
 
+    /*! Set a smooth pulse width to transition to */
+    void set_smooth(uint32_t pw, uint32_t ms);
+
     /*! Step the motor a smoothed amount. */
     void step(void);
 

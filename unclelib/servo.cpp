@@ -34,20 +34,21 @@ uint32_t servo::force(uint32_t pw) {
     return set(pw, true);
 }
 
-uint32_t servo::set_smooth(uint32_t pw, uint32_t ms) {
-    if (pw != final_duty) {
+void servo::set_smooth(uint32_t pw, uint32_t ms) {
+    if (pw != end_duty) {
         start_duty = current_duty;
         ms_smooth = ms;
         ms_counter = 0;
     }
 
-    final_duty = pw;
+    end_duty = pw;
 }
 
 void servo::step() {
     if (ms_counter < ms_smooth) {
-        set(lerp(ms_counter, 0, ms_smooth, start_duty, final_duty));
+        set(lerp(ms_counter, 0, ms_smooth, start_duty, end_duty));
     }
+    ++ms_counter;
 }
 
 uint32_t servo::set(uint32_t pw, bool force) {
@@ -55,14 +56,6 @@ uint32_t servo::set(uint32_t pw, bool force) {
     current_duty = pw;
     PWMPulseWidthSet(pwm_base, pwm_out, pw*clock_div);
     return current_duty;
-}
-
-void servo::step(uint32_t stepnum) {
-    uint32_t updated_duty =
-        set(lerp(stepnum, 0, num_steps), starting_duty, final_duty);
-    if (stepnum == num_steps) {
-        starting_duty = final_duty;
-    }
 }
 
 void servo::start() {
