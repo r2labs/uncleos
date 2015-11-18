@@ -31,3 +31,9 @@ int32_t abs(int32_t val) {
     }
     return -val;
 }
+
+int32_t lerp(int32_t x, int32_t x_min, int32_t x_max, int32_t y_min, int32_t y_max) {
+    if (x > x_max) { return y_max; }
+    else if (x < x_min) { return y_min; }
+    return y_min + (y_max - y_min)*((x - x_min)/(x_max - x_min));
+}
