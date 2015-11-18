@@ -146,7 +146,7 @@ int8_t set_joint_twiddler(char* args) {
 
 int8_t goto_rest(char* args) {
     for (uint8_t i=0; i<5; ++i) {
-        servos[i].set(servos[i].rest_duty);
+        servos[i].force(servos[i].rest_duty);
     }
     return 0;
 }
@@ -207,11 +207,11 @@ int main(void) {
     UART0_RX_BUFFER = buffer<char, UART0_RX_BUFFER_SIZE>(&UART0_RX_SEM);
     uart0 = uart(UART0_BASE, INT_UART0, &UART0_RX_BUFFER);
 
-    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500, 150);
-    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1945, 150);
-    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 500, 2100, 1860, 150);
-    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 500, 2550, 1500, 150);
-    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000, 150);
+    servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500, 1500);
+    servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1945, 1500);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 500, 2100, 1860, 1500);
+    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 500, 2550, 1500, 1500);
+    servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000, 1500);
 
     for (int8_t i=0; i<5; ++i) {
         servos[i].start();
@@ -233,7 +233,7 @@ int main(void) {
                       &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES,
                       INT_GPIOF_TM4C123, true);
 
-    timer0 = timer(0, TIMER_A, TIMER_CFG_PERIODIC, SysCtlClockGet() / 20,
+    timer0 = timer(0, TIMER_A, TIMER_CFG_PERIODIC, SysCtlClockGet() / 1000,
                    ctlsys::timer_timeout_from_subtimer(TIMER_A));
 
     timer0.start();
