@@ -46,7 +46,7 @@ uart uart0;
 shell shell0;
 lswitch switch0;
 semaphore sem_switch;
-timer timer2;
+timer timer0;
 uint8_t jointnum = 1;
 
 uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
@@ -167,11 +167,13 @@ extern "C" void GPIOPortF_Handler() {
     switch0.debounce();
 }
 
-extern "C" void Timer2A_Handler() {
-    timer2.ack();
+extern "C" void Timer0A_Handler() {
+
+    blink.toggle(PIN_GREEN);
     for (int i=0; i<5; ++i) {
         servos[i].step();
     }
+    timer0.ack();
 }
 
 extern "C" void Timer1A_Handler() {
@@ -231,8 +233,10 @@ int main(void) {
                       &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES,
                       INT_GPIOF_TM4C123, true);
 
-    timer2 = timer(2, TIMER_A, TIMER_CFG_PERIODIC, SysCtlClockGet() / 1000,
+    timer0 = timer(0, TIMER_A, TIMER_CFG_PERIODIC, SysCtlClockGet() / 20,
                    ctlsys::timer_timeout_from_subtimer(TIMER_A));
+
+    timer0.start();
 
     os_threading_init();
     schedule(shell_handler, 200);
