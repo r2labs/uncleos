@@ -207,8 +207,8 @@ int main(void) {
 
     servos[0] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_0, 600, 2500, 1500);
     servos[1] = servo(PWM0_BASE, PWM_GEN_0, PWM_OUT_1, 600, 2400, 1945);
-    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 600, 2100, 1860);
-    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 600, 2500, 1500);
+    servos[2] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_2, 500, 2100, 1860);
+    servos[3] = servo(PWM0_BASE, PWM_GEN_2, PWM_OUT_4, 500, 2550, 1500);
     servos[4] = servo(PWM0_BASE, PWM_GEN_1, PWM_OUT_3, 1000, 2500, 1000);
 
     for (int8_t i=0; i<5; ++i) {
