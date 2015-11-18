@@ -18,13 +18,16 @@ private:
 
     uint32_t pwm_period;
 
-    uint32_t current_duty;
+    uint32_t current_duty, start_duty, end_duty;
+    uint32_t ms_counter, ms_smooth;
 
     void pwm_init(void);
 
     bool enabled;
 
     int32_t clock_div;
+
+    const static uint16_t num_steps = 50;
 
 public:
     uint32_t min_duty, max_duty, rest_duty;
@@ -41,11 +44,14 @@ public:
     /*! Enable power to the motor. */
     void start(void);
 
+    /*! Step the motor a smoothed amount. */
+    void step(void);
+
     /*! Force the motor speed. */
     uint32_t force(uint32_t pw);
 
     /*! Set the motor speed. */
-    uint32_t set(uint32_t pw);
+    uint32_t set(uint32_t pw, bool force = false);
 
     uint32_t get(void);
 

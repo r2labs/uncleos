@@ -11,6 +11,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
 #include "driverlib/pwm.h"
+#include "driverlib/timer.h"
 
 #include "unclelib/blinker.hpp"
 #include "unclelib/ctlsysctl.hpp"
@@ -19,6 +20,7 @@
 #include "unclelib/semaphorepp.hpp"
 #include "unclelib/shellpp.hpp"
 #include "unclelib/switchpp.hpp"
+#include "unclelib/timerpp.hpp"
 #include "unclelib/uartpp.hpp"
 
 #include "uncleos/nexus.h"
@@ -44,6 +46,7 @@ uart uart0;
 shell shell0;
 lswitch switch0;
 semaphore sem_switch;
+timer timer2;
 uint8_t jointnum = 1;
 
 uint32_t lerp(uint32_t x, uint32_t x_min, uint32_t x_max,
@@ -85,6 +88,13 @@ extern "C" void UART0_Handler(void) {
 
 void shell_handler() {
     shell0.shell_handler();
+}
+
+int8_t set_joint_smooth_pulse_width(char* args) {
+    uint8_t jointnum = 10*(args[0]-'0')+args[1]-'0';
+    uint32_t pw = (args[3]-'0')*1000 + (args[4]-'0')*100 + (args[5]-'0')*10 + (args[6]-'0');
+    servos[jointnum].set_smooth(pw, 50);
+    return 0;
 }
 
 int8_t set_joint_pulse_width(char* args) {
@@ -157,6 +167,13 @@ extern "C" void GPIOPortF_Handler() {
     switch0.debounce();
 }
 
+extern "C" void Timer2A_Handler() {
+    timer2.ack();
+    for (int i=0; i<5; ++i) {
+        servos[i].step();
+    }
+}
+
 extern "C" void Timer1A_Handler() {
     switch0.end_debounce();
 }
@@ -200,7 +217,8 @@ int main(void) {
 
     shell0 = shell(&uart0);
     shell0.register_command("QP", query_joint_pulse_width);
-    shell0.register_command("J", set_joint_pulse_width);
+    shell0.register_command("J", set_joint_smooth_pulse_width);
+    shell0.register_command("S", set_joint_pulse_width);
     shell0.register_command("D", set_joint_discrete);
     shell0.register_command("T", set_joint_twiddler);
     shell0.register_command("E", set_estimated_angle);
@@ -212,6 +230,9 @@ int main(void) {
     switch0 = lswitch(GPIO_PORTF_BASE, BUTTONS_BOTH,
                       &sem_switch, 1, TIMER_A, GPIO_BOTH_EDGES,
                       INT_GPIOF_TM4C123, true);
+
+    timer2 = timer(2, TIMER_A, TIMER_CFG_PERIODIC, SysCtlClockGet() / 1000,
+                   ctlsys::timer_timeout_from_subtimer(TIMER_A));
 
     os_threading_init();
     schedule(shell_handler, 200);
